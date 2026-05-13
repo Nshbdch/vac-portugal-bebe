@@ -517,13 +517,13 @@
   }
   .seg-track {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
     gap: 0;
     background: var(--ink);
     border-radius: 999px;
     padding: 5px;
     position: relative;
-    max-width: 560px;
+    max-width: 720px;
     margin: 0 auto;
   }
   .seg-indicator {
@@ -531,17 +531,18 @@
     top: 5px;
     bottom: 5px;
     left: 5px;
-    width: calc(50% - 5px);
+    width: calc(33.3333% - 3.33px);
     background: var(--terracotta);
     border-radius: 999px;
     transition: transform 0.4s cubic-bezier(0.65, 0, 0.35, 1);
     z-index: 1;
   }
   .seg-track[data-itin="2"] .seg-indicator { transform: translateX(100%); }
+  .seg-track[data-itin="3"] .seg-indicator { transform: translateX(200%); }
   .seg-btn {
     position: relative;
     z-index: 2;
-    padding: 12px 16px;
+    padding: 12px 14px;
     color: rgba(247, 241, 227, 0.55);
     transition: color 0.3s ease;
     display: inline-flex;
@@ -549,6 +550,7 @@
     justify-content: center;
     gap: 10px;
     font-family: inherit;
+    min-width: 0;
   }
   .seg-btn.active { color: var(--paper); }
   .seg-num {
@@ -561,13 +563,20 @@
   .seg-label {
     font-family: var(--display);
     font-weight: 700;
-    font-size: 15px;
+    font-size: 14px;
     letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  @media (max-width: 520px) {
+  @media (max-width: 720px) {
     .seg-num { display: none; }
-    .seg-label { font-size: 14px; }
-    .seg-btn { padding: 12px 8px; }
+    .seg-label { font-size: 13px; }
+    .seg-btn { padding: 10px 6px; gap: 6px; }
+  }
+  @media (max-width: 420px) {
+    .seg-label { font-size: 11px; letter-spacing: 0; }
+    .seg-btn { padding: 9px 4px; }
   }
   .seg-summary {
     text-align: center;
@@ -637,18 +646,48 @@
   }
   .day-card-day {
     position: absolute;
-    top: 12px;
+    top: 14px;
     left: 14px;
-    background: rgba(26, 22, 20, 0.75);
+    background: var(--ink);
+    color: var(--paper);
+    padding: 10px 14px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    z-index: 3;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+    line-height: 1;
+  }
+  .day-card-day .j-prefix {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
     color: var(--gold);
-    padding: 5px 10px;
-    border-radius: 4px;
+    text-transform: uppercase;
+  }
+  .day-card-day .j-num {
+    font-family: var(--display);
+    font-size: 26px;
+    font-weight: 900;
+    color: var(--paper);
+    letter-spacing: -0.02em;
+    line-height: 0.9;
+  }
+  .day-card-day .j-date {
     font-family: var(--mono);
     font-size: 10px;
-    letter-spacing: 0.15em;
-    font-weight: 700;
-    z-index: 2;
-    backdrop-filter: blur(6px);
+    color: rgba(247, 241, 227, 0.7);
+    letter-spacing: 0.04em;
+    margin-left: 2px;
+    padding-left: 8px;
+    border-left: 1px solid rgba(247, 241, 227, 0.2);
+    line-height: 1.1;
+  }
+  @media (max-width: 380px) {
+    .day-card-day { padding: 8px 12px; gap: 6px; }
+    .day-card-day .j-num { font-size: 22px; }
   }
   .day-card-date {
     position: absolute;
@@ -1448,6 +1487,10 @@
           <span class="seg-num">02</span>
           <span class="seg-label">Boucle Atlantique</span>
         </button>
+        <button class="seg-btn" role="tab" aria-selected="false" data-itin="3">
+          <span class="seg-num">03</span>
+          <span class="seg-label">Surf &amp; Vignobles</span>
+        </button>
       </div>
       <div class="seg-summary" id="segSummary"></div>
     </div>
@@ -2067,8 +2110,239 @@ const itineraryData2 = [
   }
 ];
 
+/* ===== Itinerary 3 : Surf, Vignobles & Peniche ===== */
+const itineraryData3 = [
+  {
+    day: 1, date: "Sam. 20 juin", title: "Faro & Vieille Ville",
+    route: "Aéroport Faro → Faro", km: 8, driveTime: "0h15",
+    scene: "cliffs",
+    coords: [37.0193, -7.9304], place: "Faro",
+    activities: [
+      "Arrivée à l'aéroport de Faro, prise en main de la voiture.",
+      "Balade dans la vieille ville fortifiée : Arco da Vila, cathédrale Sé.",
+      "Premier dîner dans une taverne traditionnelle de la Cidade Velha.",
+      "Installation au Happen!ng 2 — B&B triple avec balcon, près du centre."
+    ],
+    accommodation: "Faro — Happen!ng 2, B&B confortable bien noté à courte distance du centre.",
+    tip: "Garez la voiture dès l'arrivée à l'hôtel et faites tout à pied — la vieille ville se traverse en 15 minutes.",
+    booking: [
+      { label: "Happen!ng 2 (Faro)", url: "https://happenng-2.hotelsalgarve.net/en/", price: "≈83€/nuit", rating: "B&B triple avec balcon" }
+    ]
+  },
+  {
+    day: 2, date: "Dim. 21 juin", title: "Ria Formosa & Oiseaux",
+    route: "Faro (boucle)", km: 30, driveTime: "0h45",
+    scene: "tower",
+    coords: [37.0193, -7.9304], place: "Ria Formosa",
+    activities: [
+      "Excursion en bateau dans le Parc Naturel de Ria Formosa — lagune de 60 km de canaux et îlots.",
+      "Observation d'oiseaux : flamants roses, hérons pourprés, cigognes.",
+      "Pause baignade sur l'île de Culatra ou Farol.",
+      "Après-midi : plage de Faro ou détour à Tavira si vous voulez plus de charme historique."
+    ],
+    accommodation: "Faro — Happen!ng 2, deuxième nuit.",
+    tip: "Réservez l'excursion en bateau le matin pour assurer une place — les départs en haute saison sont vite complets.",
+    booking: [
+      { label: "Happen!ng 2 (Faro)", url: "https://happenng-2.hotelsalgarve.net/en/", price: "≈83€/nuit", rating: "B&B triple avec balcon" }
+    ]
+  },
+  {
+    day: 3, date: "Lun. 22 juin", title: "Cap sur Lagos",
+    route: "Faro → Lagos", km: 90, driveTime: "1h15",
+    scene: "cliffs",
+    coords: [37.1028, -8.6738], place: "Lagos",
+    activities: [
+      "Route vers Lagos (~1h15).",
+      "Installation à Lagos Village, hôtel à 10 min de la plage avec piscine.",
+      "Découverte du centre : église Santo António, Fort da Ponta da Bandeira.",
+      "Coucher de soleil sur Praia Dona Ana."
+    ],
+    accommodation: "Lagos — Lagos Village, chambre triple confort, piscine et petit déjeuner inclus.",
+    tip: "Vérifiez que la voiture de location inclut le 'Via Verde' pour le péage électronique de l'A22.",
+    booking: [
+      { label: "Lagos Village", url: "https://www.booking.com/hotel/pt/lagos-village.html", price: "≈140€/nuit", rating: "Triple Comfort · piscine" }
+    ]
+  },
+  {
+    day: 4, date: "Mar. 23 juin", title: "Ponta da Piedade",
+    route: "Lagos (boucle)", km: 40, driveTime: "1h",
+    scene: "cave",
+    coords: [37.0796, -8.6680], place: "Ponta da Piedade",
+    activities: [
+      "Matin : kayak ou bateau dans les grottes marines de Ponta da Piedade — colonnes de calcaire, arches et criques turquoise.",
+      "Passerelle au-dessus des falaises, puis descente des 181 marches vers les criques secrètes.",
+      "Baignade à Praia do Camilo ou Praia da Marinha (parmi les plus belles plages d'Europe).",
+      "Option soir : session surf sur la côte ouest (Arrifana ou Amoreira)."
+    ],
+    accommodation: "Lagos — Lagos Village, deuxième nuit.",
+    tip: "Praia da Marinha est plus paisible le matin tôt — l'après-midi, la lumière est dure et les tour-opérateurs débarquent.",
+    booking: [
+      { label: "Lagos Village", url: "https://www.booking.com/hotel/pt/lagos-village.html", price: "≈140€/nuit", rating: "Triple Comfort · piscine" }
+    ]
+  },
+  {
+    day: 5, date: "Mer. 24 juin", title: "Peniche & Supertubos",
+    route: "Lagos → Peniche", km: 360, driveTime: "3h45",
+    scene: "lighthouse",
+    coords: [39.3559, -9.3811], place: "Peniche",
+    activities: [
+      "Longue remontée vers la Silver Coast (~3h45).",
+      "Arrivée à Peniche, capitale européenne du surf et étape du World Surf League.",
+      "Installation à Boa Onda Guesthouse à Consolação — à quelques mètres de la plage et du spot de Supertubos.",
+      "Découverte du Cabo Carvoeiro, ses falaises et la forteresse de Peniche.",
+      "Cours de yoga proposé sur place avant le dîner."
+    ],
+    accommodation: "Peniche — Boa Onda Guesthouse, perle salée à 1h de Lisbonne, ambiance surf chaleureuse.",
+    tip: "Partez tôt de Lagos (au plus tard 9h) pour arriver en milieu d'après-midi et profiter d'une session de fin de journée.",
+    booking: [
+      { label: "Boa Onda Guesthouse (Peniche)", url: "https://boaondaguesthousepeniche.com", price: "≈120€/nuit", rating: "Surf · yoga · petit-déj inclus" }
+    ]
+  },
+  {
+    day: 6, date: "Jeu. 25 juin", title: "Ericeira, Réserve de Surf",
+    route: "Peniche → Ericeira", km: 65, driveTime: "1h",
+    scene: "lighthouse",
+    coords: [38.9633, -9.4159], place: "Ericeira",
+    activities: [
+      "Route courte vers Ericeira (~1h).",
+      "Découverte de la 1ère réserve mondiale de surf en Europe — 8 km de côte préservée.",
+      "Spots mythiques : Ribeira d'Ilhas, Coxos, São Lourenço, Empa.",
+      "Cours de surf ou location de planche selon votre niveau.",
+      "Soir : ruelles pavées du village, fruits de mer au port."
+    ],
+    accommodation: "Ericeira — Amar Hostel & Suites (chambre triple, jardin, vue mer) ou Vila Galé Ericeira (hôtel en bord de mer).",
+    tip: "Réservez le cours de surf la veille — surveillez la météo et les marées sur le site Wisuki ou Magicseaweed.",
+    booking: [
+      { label: "Amar Hostel & Suites (Ericeira)", url: "https://www.booking.com/hotel/pt/casa-do-sol.html", price: "≈90-130€/nuit", rating: "Auberge triple · vue mer" },
+      { label: "Vila Galé Ericeira", url: "https://www.vilagale.com", price: "≈155€/nuit", rating: "Hôtel bord de mer · piscines" }
+    ]
+  },
+  {
+    day: 7, date: "Ven. 26 juin", title: "Cap sur le Douro",
+    route: "Ericeira → Pinhão", km: 380, driveTime: "4h",
+    scene: "vineyard",
+    coords: [41.1903, -7.5440], place: "Pinhão / Douro",
+    activities: [
+      "Route nord vers la vallée du Douro (~4h via A1/A4).",
+      "Arrivée en début d'après-midi, installation à Casa Dona Eufémia, maison d'hôtes au milieu des vignes.",
+      "Première visite d'une quinta historique : 2 000 ans de viticulture en terrasses (UNESCO).",
+      "Dégustation de Porto Tawny, LBV et Vintage."
+    ],
+    accommodation: "Pinhão — Casa Dona Eufémia, chambres familiales avec piscine au cœur des vignobles.",
+    tip: "Faites le plein avant d'entrer dans le Douro — les stations-service sont rares dans la vallée.",
+    booking: [
+      { label: "Casa Dona Eufémia (Pinhão)", url: "https://www.booking.com/hotel/pt/casa-dona-eufemia.html", price: "≈105€/nuit", rating: "Maison d'hôtes · vignes · piscine" }
+    ]
+  },
+  {
+    day: 8, date: "Sam. 27 juin", title: "Route N222 & Croisière Douro",
+    route: "Boucle Douro", km: 70, driveTime: "1h30",
+    scene: "vineyard",
+    coords: [41.1903, -7.5440], place: "Vallée du Douro",
+    activities: [
+      "Matin : route panoramique N222 entre Peso da Régua et Pinhão — souvent citée parmi les plus belles routes du monde.",
+      "Arrêt à la gare de Pinhão pour ses azulejos peints.",
+      "Croisière sur le Douro (1h ou 2h selon vos envies).",
+      "Déjeuner en terrasse face aux vignes en terrasses.",
+      "Après-midi : visite d'une seconde quinta (Quinta do Bomfim ou Quinta da Pacheca)."
+    ],
+    accommodation: "Pinhão — Casa Dona Eufémia, deuxième nuit.",
+    tip: "Réservez les caves à l'avance : beaucoup ne reçoivent que sur rendez-vous, surtout les plus prestigieuses.",
+    booking: [
+      { label: "Casa Dona Eufémia (Pinhão)", url: "https://www.booking.com/hotel/pt/casa-dona-eufemia.html", price: "≈105€/nuit", rating: "Maison d'hôtes · vignes · piscine" }
+    ]
+  },
+  {
+    day: 9, date: "Dim. 28 juin", title: "Porto, Ribeira & Pont Eiffel",
+    route: "Pinhão → Porto", km: 120, driveTime: "1h30",
+    scene: "ribeira",
+    coords: [41.1389, -8.6109], place: "Porto",
+    activities: [
+      "Route vers Porto (~1h30).",
+      "Installation à Regras Apartments & Garden — appartement 2 chambres avec cuisine.",
+      "Balade sur la Ribeira, quartier UNESCO, maisons colorées du Douro.",
+      "Traversée du Pont Dom Luís I (1886, élève d'Eiffel) sur le tablier supérieur.",
+      "Caves de Porto à Vila Nova de Gaia + dégustation.",
+      "Soirée : francesinha (le plat de l'apocalypse) à partager."
+    ],
+    accommodation: "Porto — Regras Apartments & Garden, appartement 2 chambres + cuisine, idéal en groupe.",
+    tip: "Garez la voiture pour les 2 nuits dans un parking couvert (10-15€/jour) — Porto se découvre à pied.",
+    booking: [
+      { label: "Regras Apartments & Garden (Porto)", url: "https://www.booking.com/hotel/pt/regras-apartments-garden.html", price: "≈93€/nuit", rating: "Appart 2 chambres · cuisine" }
+    ]
+  },
+  {
+    day: 10, date: "Lun. 29 juin", title: "Porto Classique",
+    route: "Porto (à pied)", km: 0, driveTime: "0h",
+    scene: "ribeira",
+    coords: [41.1389, -8.6109], place: "Porto",
+    activities: [
+      "Matin : gare São Bento et ses 20 000 azulejos peints.",
+      "Tour des Clercs et Librairie Lello (réservez en ligne pour éviter la queue).",
+      "Cathédrale Sé et son cloître.",
+      "Marché do Bolhão restauré : produits locaux, bocadillos, vin.",
+      "Soir : coucher de soleil depuis le Jardim do Morro à Gaia."
+    ],
+    accommodation: "Porto — Regras Apartments & Garden, deuxième nuit.",
+    tip: "La Librairie Lello impose un billet d'entrée déductible à l'achat d'un livre — vendu en ligne uniquement.",
+    booking: [
+      { label: "Regras Apartments & Garden (Porto)", url: "https://www.booking.com/hotel/pt/regras-apartments-garden.html", price: "≈93€/nuit", rating: "Appart 2 chambres · cuisine" }
+    ]
+  },
+  {
+    day: 11, date: "Mar. 30 juin", title: "Évora, Capitale de l'Alentejo",
+    route: "Porto → Évora", km: 420, driveTime: "4h15",
+    scene: "university",
+    coords: [38.5713, -7.9135], place: "Évora",
+    activities: [
+      "Longue descente vers le sud par l'A1 puis A6 (~4h15 avec une pause).",
+      "Arrivée à Évora en milieu d'après-midi, installation à l'Hotel Solar de Monfalim, bâtisse historique au cœur de la ville.",
+      "Découverte du centre UNESCO : Place Giraldo, Temple Romain, Cathédrale.",
+      "Visite de la Capela dos Ossos — chapelle aux murs ornés de milliers de crânes et ossements humains (XVIIᵉ siècle).",
+      "Dîner alentejano : porc noir, fromage de brebis, vins de la région."
+    ],
+    accommodation: "Évora — Hotel Solar de Monfalim, hôtel historique au cœur de la vieille ville.",
+    tip: "La Capela dos Ossos ferme à 17h45 (entrée jusqu'à 17h15) — visez l'arrivée à Évora avant 16h.",
+    booking: [
+      { label: "Hotel Solar de Monfalim (Évora)", url: "https://www.booking.com/hotel/pt/residencial-solar-de-monfalim.html", price: "≈93€/nuit", rating: "Historique · centre UNESCO" }
+    ]
+  },
+  {
+    day: 12, date: "Mer. 1 juillet", title: "Retour à Faro",
+    route: "Évora → Faro", km: 230, driveTime: "2h30",
+    scene: "cliffs",
+    coords: [37.0193, -7.9304], place: "Faro",
+    activities: [
+      "Matinée tranquille à Évora — café sur la Place Giraldo, dernières photos.",
+      "Route vers Faro (~2h30) via l'A2.",
+      "Arrêt possible à Mértola, petit village fortifié au-dessus du Guadiana, ou à une plage de l'Alentejo (Comporta, Vila Nova de Milfontes).",
+      "Arrivée à Faro en fin d'après-midi, retour au Happen!ng 2.",
+      "Dîner d'adieu dans la vieille ville de Faro."
+    ],
+    accommodation: "Faro — Happen!ng 2, dernière nuit du voyage.",
+    tip: "Faites le plein avant de rendre la voiture le lendemain — sinon la location vous facture un forfait carburant majoré.",
+    booking: [
+      { label: "Happen!ng 2 (Faro)", url: "https://happenng-2.hotelsalgarve.net/en/", price: "≈83€/nuit", rating: "B&B triple avec balcon" }
+    ]
+  },
+  {
+    day: 13, date: "Jeu. 2 juillet", title: "Vol Retour",
+    route: "Faro → Aéroport", km: 8, driveTime: "0h15",
+    scene: "farewell",
+    coords: [37.0144, -7.9659], place: "Aéroport Faro",
+    activities: [
+      "Petit-déjeuner tranquille au Happen!ng 2.",
+      "Restitution de la voiture à l'aéroport (prévoir 1h avant le vol).",
+      "Enregistrement et embarquement.",
+      "Vol retour à 11h."
+    ],
+    accommodation: "Départ.",
+    tip: "Soyez à l'aéroport au plus tard à 9h pour un vol à 11h. La restitution de voiture peut prendre du temps en haute saison."
+  }
+];
+
 /* ===== Active itinerary state ===== */
-const itineraries = { 1: itineraryData1, 2: itineraryData2 };
+const itineraries = { 1: itineraryData1, 2: itineraryData2, 3: itineraryData3 };
 let currentItin = 1;
 let itineraryData = itineraries[currentItin];
 
@@ -2114,7 +2388,11 @@ function renderDaysSwiper() {
     const svgThumb = makeSceneSVG(d.scene || 'cliffs', d.place);
     card.innerHTML = `
       <div class="day-card-thumb">
-        <span class="day-card-day">J${d.day} · ${d.date.replace(/\.$/, '')}</span>
+        <div class="day-card-day">
+          <span class="j-prefix">Jour</span>
+          <span class="j-num">${d.day}</span>
+          <span class="j-date">${d.date.replace(/\.$/, '')}</span>
+        </div>
         ${svgThumb}
       </div>
       <div class="day-card-body">
@@ -2558,7 +2836,8 @@ function totalLodging(arr) {
 }
 const lodgingTotals = {
   1: totalLodging(itineraryData1),
-  2: totalLodging(itineraryData2)
+  2: totalLodging(itineraryData2),
+  3: totalLodging(itineraryData3)
 };
 
 /* ===== Budget chart (rebuildable) ===== */
@@ -2749,7 +3028,12 @@ function renderSegSummary() {
   if (!el) return;
   const totalKm = itineraryData.reduce((s, d) => s + d.km, 0);
   const lodging = lodgingTotals[currentItin];
-  const name = currentItin === 1 ? 'Lagos · Lisbonne · Porto · Faro' : 'Faro · Évora · Douro · Tavira';
+  const names = {
+    1: 'Lagos · Lisbonne · Porto · Faro',
+    2: 'Faro · Évora · Douro · Tavira',
+    3: 'Faro · Lagos · Peniche · Ericeira · Douro · Porto'
+  };
+  const name = names[currentItin] || '';
   el.innerHTML = `<strong>${name}</strong> · ${totalKm} km · ${Math.round(lodging)}€ de logement`;
 }
 
