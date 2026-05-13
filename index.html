@@ -1,1863 +1,279 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PortuTrip '26 — Le Carnet de Route</title>
-
-<!-- Fonts: distinctive editorial pairing -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,700;9..144,900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-
-<!-- Leaflet for the interactive map -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<style>
-  /* ================================
-     Design tokens
-     ================================ */
-  :root {
-    --terracotta: #c0492a;
-    --terracotta-deep: #8a2f17;
-    --azulejo: #1d4f7c;
-    --azulejo-light: #3b7ab0;
-    --sand: #f1e6d1;
-    --cream: #f7f1e3;
-    --ink: #1a1614;
-    --paper: #fdfaf2;
-    --olive: #6b6321;
-    --gold: #d4a017;
-    --sea: #2e7d8f;
-    --mute: #7a7268;
-    --line: rgba(26, 22, 20, 0.12);
-
-    --display: 'Fraunces', Georgia, serif;
-    --body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    --mono: 'JetBrains Mono', 'Courier New', monospace;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
-  body {
-    font-family: var(--body);
-    background: var(--paper);
-    color: var(--ink);
-    line-height: 1.6;
-    overflow-x: hidden;
-  }
-
-  /* Subtle paper grain on everything */
-  body::before {
-    content: "";
-    position: fixed; inset: 0;
-    pointer-events: none;
-    z-index: 1;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.08 0 0 0 0 0.06 0 0 0 0.05 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
-    opacity: 0.6;
-    mix-blend-mode: multiply;
-  }
-
-  a { color: inherit; text-decoration: none; }
-  button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
-
-  .container { max-width: 1280px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 2; }
-
-  /* ================================
-     Navigation
-     ================================ */
-  nav {
-    position: fixed; top: 0; left: 0; right: 0;
-    z-index: 100;
-    background: rgba(253, 250, 242, 0.92);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--line);
-    transition: padding 0.3s ease;
-  }
-  .nav-inner {
-    max-width: 1280px; margin: 0 auto; padding: 18px 24px;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .logo {
-    font-family: var(--display);
-    font-weight: 900;
-    font-size: 22px;
-    letter-spacing: -0.02em;
-    color: var(--terracotta-deep);
-    display: flex; align-items: center; gap: 8px;
-  }
-  .logo .dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--terracotta);
-    animation: pulse 2s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(1.3); }
-  }
-  .nav-links { display: flex; gap: 32px; align-items: center; }
-  .nav-links a {
-    font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--mute);
-    transition: color 0.2s;
-    position: relative;
-  }
-  .nav-links a:hover { color: var(--ink); }
-  .nav-links a::after {
-    content: ""; position: absolute; bottom: -4px; left: 0;
-    width: 0; height: 1px; background: var(--terracotta);
-    transition: width 0.3s ease;
-  }
-  .nav-links a:hover::after { width: 100%; }
-  @media (max-width: 720px) {
-    .nav-links a:not(.cta-mini) { display: none; }
-  }
-  .cta-mini {
-    padding: 8px 16px;
-    background: var(--ink); color: var(--paper) !important;
-    border-radius: 999px;
-    font-size: 12px !important;
-  }
-  .cta-mini::after { display: none !important; }
-
-  /* ================================
-     HERO
-     ================================ */
-  .hero {
-    min-height: 100vh;
-    padding: 120px 0 60px;
-    position: relative;
-    display: flex; align-items: center;
-    overflow: hidden;
-  }
-  .hero-bg {
-    position: absolute; inset: 0;
-    background:
-      radial-gradient(ellipse at 80% 20%, rgba(192, 73, 42, 0.18), transparent 50%),
-      radial-gradient(ellipse at 10% 80%, rgba(29, 79, 124, 0.15), transparent 55%),
-      linear-gradient(180deg, var(--paper) 0%, var(--cream) 100%);
-    z-index: 0;
-  }
-  /* Decorative wave */
-  .hero-wave {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    height: 80px;
-    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 80' preserveAspectRatio='none'><path d='M0,40 C320,80 480,0 720,40 C960,80 1120,0 1440,40 L1440,80 L0,80 Z' fill='%23c0492a' opacity='0.08'/></svg>") repeat-x;
-    background-size: 1440px 80px;
-    z-index: 1;
-  }
-  .hero-inner { position: relative; z-index: 2; width: 100%; }
-  .hero-grid {
-    display: grid;
-    grid-template-columns: 1.2fr 1fr;
-    gap: 60px;
-    align-items: center;
-  }
-  @media (max-width: 980px) {
-    .hero-grid { grid-template-columns: 1fr; gap: 40px; }
-  }
-  .eyebrow {
-    display: inline-flex; align-items: center; gap: 10px;
-    font-family: var(--mono);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.2em;
-    color: var(--terracotta);
-    margin-bottom: 24px;
-  }
-  .eyebrow .line { width: 32px; height: 1px; background: var(--terracotta); }
-
-  h1.display {
-    font-family: var(--display);
-    font-weight: 900;
-    font-size: clamp(48px, 8vw, 104px);
-    line-height: 0.95;
-    letter-spacing: -0.04em;
-    color: var(--ink);
-    margin-bottom: 24px;
-  }
-  h1.display .italic {
-    font-style: italic;
-    font-weight: 400;
-    color: var(--terracotta);
-  }
-  h1.display .strike {
-    position: relative;
-    display: inline-block;
-  }
-  h1.display .strike::after {
-    content: "";
-    position: absolute;
-    left: -5%; right: -5%;
-    top: 55%;
-    height: 6px;
-    background: var(--gold);
-    transform: rotate(-2deg);
-    opacity: 0.7;
-  }
-
-  .hero-lede {
-    font-size: 19px;
-    color: var(--mute);
-    max-width: 560px;
-    margin-bottom: 32px;
-    line-height: 1.55;
-  }
-
-  .hero-meta {
-    display: flex; flex-wrap: wrap; gap: 12px;
-    margin-bottom: 40px;
-  }
-  .pill {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 8px 16px;
-    background: rgba(26, 22, 20, 0.06);
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    font-size: 13px;
-    font-weight: 500;
-  }
-  .pill .icon { font-size: 14px; }
-
-  /* Hero polaroid stack */
-  .polaroid-stack {
-    position: relative;
-    height: 520px;
-  }
-  @media (max-width: 980px) {
-    .polaroid-stack { height: 420px; }
-  }
-  .polaroid {
-    position: absolute;
-    background: white;
-    padding: 12px 12px 50px 12px;
-    box-shadow: 0 20px 50px -10px rgba(0,0,0,0.25), 0 5px 15px -5px rgba(0,0,0,0.1);
-    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-  .polaroid .polaroid-art {
-    display: block;
-    width: 100%;
-    height: calc(100% - 38px);
-    position: relative;
-    overflow: hidden;
-    background: var(--cream);
-  }
-  .polaroid .polaroid-art svg {
-    width: 100%;
-    height: 100%;
-    display: block;
-  }
-  .polaroid .caption {
-    position: absolute;
-    bottom: 14px; left: 16px; right: 16px;
-    font-family: var(--display);
-    font-style: italic;
-    font-size: 14px;
-    color: var(--mute);
-    text-align: center;
-  }
-  .polaroid:nth-child(1) {
-    width: 280px; height: 340px;
-    top: 30px; left: 20px;
-    transform: rotate(-6deg);
-    z-index: 1;
-  }
-  .polaroid:nth-child(2) {
-    width: 260px; height: 320px;
-    top: 80px; right: 0;
-    transform: rotate(5deg);
-    z-index: 2;
-  }
-  .polaroid:nth-child(3) {
-    width: 220px; height: 280px;
-    bottom: 0; left: 35%;
-    transform: rotate(-2deg);
-    z-index: 3;
-  }
-  .polaroid:hover { transform: scale(1.05) rotate(0deg) !important; z-index: 10; }
-
-  /* Countdown */
-  .countdown {
-    display: inline-flex;
-    gap: 24px;
-    padding: 20px 32px;
-    background: var(--ink);
-    color: var(--paper);
-    border-radius: 4px;
-    margin-top: 12px;
-  }
-  .cd-block { text-align: center; }
-  .cd-num {
-    font-family: var(--display);
-    font-weight: 900;
-    font-size: 36px;
-    line-height: 1;
-    color: var(--gold);
-  }
-  .cd-label {
-    font-family: var(--mono);
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    margin-top: 4px;
-    opacity: 0.7;
-  }
-
-  /* ================================
-     SECTIONS
-     ================================ */
-  section { padding: 100px 0; position: relative; }
-  @media (max-width: 720px) { section { padding: 60px 0; } }
-
-  .section-head {
-    display: flex; align-items: baseline; justify-content: space-between;
-    margin-bottom: 60px;
-    gap: 40px;
-    flex-wrap: wrap;
-  }
-  .section-title {
-    font-family: var(--display);
-    font-weight: 700;
-    font-size: clamp(36px, 5vw, 56px);
-    line-height: 1;
-    letter-spacing: -0.03em;
-    max-width: 700px;
-  }
-  .section-title .italic { font-style: italic; color: var(--terracotta); font-weight: 400; }
-  .section-num {
-    font-family: var(--mono);
-    font-size: 13px;
-    color: var(--terracotta);
-    letter-spacing: 0.15em;
-  }
-  .section-desc {
-    max-width: 480px;
-    font-size: 16px;
-    color: var(--mute);
-  }
-
-  /* Stats strip */
-  .stats-strip {
-    background: var(--ink);
-    color: var(--paper);
-    padding: 50px 0;
-    margin: 0 -24px;
-    overflow: hidden;
-  }
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 30px;
-    padding: 0 24px;
-  }
-  @media (max-width: 720px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
-  .stat { text-align: left; }
-  .stat-num {
-    font-family: var(--display);
-    font-weight: 900;
-    font-size: clamp(40px, 5vw, 64px);
-    line-height: 1;
-    color: var(--gold);
-    margin-bottom: 8px;
-  }
-  .stat-label {
-    font-family: var(--mono);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    opacity: 0.6;
-  }
-
-  /* ================================
-     MAP SECTION
-     ================================ */
-  .map-section { background: var(--cream); }
-  .map-wrap {
-    display: grid;
-    grid-template-columns: 1fr 360px;
-    gap: 24px;
-    align-items: start;
-  }
-  @media (max-width: 980px) {
-    .map-wrap { grid-template-columns: 1fr; }
-  }
-  #map {
-    height: 600px;
-    border-radius: 4px;
-    border: 1px solid var(--line);
-    box-shadow: 0 20px 60px -20px rgba(0,0,0,0.2);
-    z-index: 2;
-  }
-  .map-legend {
-    background: var(--paper);
-    border: 1px solid var(--line);
-    padding: 28px;
-    border-radius: 4px;
-  }
-  .map-legend h3 {
-    font-family: var(--display);
-    font-size: 22px;
-    font-weight: 700;
-    margin-bottom: 16px;
-  }
-  .legend-item {
-    display: flex; align-items: center; gap: 12px;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--line);
-    font-size: 14px;
-  }
-  .legend-item:last-child { border-bottom: none; }
-  .legend-dot {
-    width: 14px; height: 14px;
-    border-radius: 50%;
-    background: var(--terracotta);
-    flex-shrink: 0;
-  }
-  .legend-item.start .legend-dot { background: var(--olive); }
-  .legend-item.end .legend-dot { background: var(--azulejo); }
-
-  /* ================================
-     CHARTS SECTION
-     ================================ */
-  .charts-section { }
-  .charts-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 32px;
-  }
-  @media (max-width: 980px) { .charts-grid { grid-template-columns: 1fr; } }
-  .chart-card {
-    background: var(--paper);
-    border: 1px solid var(--line);
-    padding: 32px;
-    border-radius: 4px;
-    position: relative;
-  }
-  .chart-card .corner {
-    position: absolute; top: 16px; right: 20px;
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--terracotta);
-    letter-spacing: 0.1em;
-  }
-  .chart-card h3 {
-    font-family: var(--display);
-    font-size: 26px;
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
-  .chart-card .sub {
-    font-size: 13px;
-    color: var(--mute);
-    margin-bottom: 24px;
-  }
-  .chart-container {
-    position: relative;
-    height: 320px;
-  }
-  .budget-total {
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid var(--line);
-    font-family: var(--display);
-    font-style: italic;
-    font-size: 18px;
-  }
-  .budget-total .num {
-    font-family: var(--display);
-    font-style: normal;
-    font-weight: 900;
-    color: var(--terracotta);
-    font-size: 28px;
-  }
-
-  /* ================================
-     ITINERARY (timeline + details)
-     ================================ */
-  .itin-section { background: linear-gradient(180deg, var(--paper) 0%, var(--cream) 100%); }
-  .itin-grid {
-    display: grid;
-    grid-template-columns: 380px 1fr;
-    gap: 40px;
-    align-items: start;
-  }
-  @media (max-width: 980px) {
-    .itin-grid { grid-template-columns: 1fr; }
-  }
-  .day-list {
-    max-height: 720px;
-    overflow-y: auto;
-    padding-right: 8px;
-    position: sticky;
-    top: 100px;
-  }
-  @media (max-width: 980px) {
-    .day-list { position: static; max-height: none; }
-  }
-  .day-list::-webkit-scrollbar { width: 4px; }
-  .day-list::-webkit-scrollbar-track { background: transparent; }
-  .day-list::-webkit-scrollbar-thumb { background: var(--terracotta); border-radius: 2px; }
-
-  .day-btn {
-    display: block;
-    width: 100%;
-    text-align: left;
-    padding: 18px 20px;
-    margin-bottom: 8px;
-    background: var(--paper);
-    border: 1px solid var(--line);
-    border-radius: 4px;
-    transition: all 0.25s ease;
-    position: relative;
-    overflow: hidden;
-  }
-  .day-btn::before {
-    content: "";
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 3px;
-    background: var(--terracotta);
-    transform: scaleY(0);
-    transition: transform 0.3s ease;
-    transform-origin: top;
-  }
-  .day-btn:hover { transform: translateX(4px); border-color: var(--terracotta); }
-  .day-btn:hover::before { transform: scaleY(1); }
-  .day-btn.active {
-    background: var(--ink);
-    color: var(--paper);
-    border-color: var(--ink);
-  }
-  .day-btn.active::before { background: var(--gold); transform: scaleY(1); }
-  .day-btn .d-num {
-    font-family: var(--mono);
-    font-size: 11px;
-    letter-spacing: 0.15em;
-    color: var(--terracotta);
-    text-transform: uppercase;
-    margin-bottom: 6px;
-  }
-  .day-btn.active .d-num { color: var(--gold); }
-  .day-btn .d-title {
-    font-family: var(--display);
-    font-weight: 700;
-    font-size: 18px;
-    line-height: 1.2;
-    margin-bottom: 4px;
-  }
-  .day-btn .d-route {
-    font-size: 12px;
-    color: var(--mute);
-  }
-  .day-btn.active .d-route { color: rgba(247, 241, 227, 0.6); }
-
-  .day-detail {
-    background: var(--paper);
-    border: 1px solid var(--line);
-    border-radius: 4px;
-    overflow: hidden;
-    box-shadow: 0 10px 40px -10px rgba(0,0,0,0.1);
-  }
-  .day-hero {
-    height: 280px;
-    position: relative;
-    color: white;
-    overflow: hidden;
-  }
-  .day-hero-svg {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    display: block;
-  }
-  /* Decorative pattern overlay */
-  .day-hero::before {
-    content: "";
-    position: absolute; inset: 0;
-    background-image:
-      repeating-linear-gradient(45deg, rgba(255,255,255,0.04) 0 2px, transparent 2px 14px),
-      repeating-linear-gradient(-45deg, rgba(0,0,0,0.04) 0 2px, transparent 2px 14px);
-    opacity: 0.6;
-    z-index: 1;
-    pointer-events: none;
-  }
-  .day-hero::after {
-    content: "";
-    position: absolute; inset: 0;
-    background: linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.7) 100%);
-    z-index: 2;
-    pointer-events: none;
-  }
-  .day-hero-content {
-    position: absolute; bottom: 24px; left: 32px; right: 32px;
-    z-index: 3;
-  }
-  .day-hero .d-day {
-    font-family: var(--mono);
-    font-size: 12px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--gold);
-    margin-bottom: 8px;
-  }
-  .day-hero h2 {
-    font-family: var(--display);
-    font-weight: 900;
-    font-size: clamp(28px, 4vw, 42px);
-    line-height: 1;
-    letter-spacing: -0.02em;
-  }
-  .day-body { padding: 32px; }
-  .day-meta-row {
-    display: flex; gap: 32px; flex-wrap: wrap;
-    padding-bottom: 24px;
-    margin-bottom: 24px;
-    border-bottom: 1px solid var(--line);
-  }
-  .day-meta-item .label {
-    font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--mute);
-    margin-bottom: 4px;
-  }
-  .day-meta-item .val {
-    font-family: var(--display);
-    font-weight: 700;
-    font-size: 20px;
-  }
-
-  .day-cols {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 32px;
-  }
-  @media (max-width: 720px) { .day-cols { grid-template-columns: 1fr; } }
-
-  .day-section h4 {
-    font-family: var(--mono);
-    font-size: 11px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--terracotta);
-    margin-bottom: 16px;
-  }
-
-  .activities {
-    list-style: none;
-  }
-  .activities li {
-    padding: 12px 0;
-    padding-left: 32px;
-    position: relative;
-    border-bottom: 1px dashed var(--line);
-    font-size: 14px;
-    line-height: 1.5;
-  }
-  .activities li::before {
-    content: "";
-    position: absolute;
-    left: 0; top: 18px;
-    width: 18px; height: 1px;
-    background: var(--terracotta);
-  }
-  .activities li:last-child { border-bottom: none; }
-
-  .info-card {
-    padding: 20px;
-    border-radius: 4px;
-    margin-bottom: 16px;
-    border-left: 3px solid;
-  }
-  .info-card.lodging { background: rgba(212, 160, 23, 0.08); border-color: var(--gold); }
-  .info-card.tip { background: rgba(29, 79, 124, 0.06); border-color: var(--azulejo); }
-  .info-card h5 {
-    font-family: var(--display);
-    font-weight: 700;
-    font-size: 16px;
-    margin-bottom: 8px;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .info-card p { font-size: 13.5px; line-height: 1.55; color: var(--ink); }
-
-  /* ================================
-     ESSENTIALS / CHECKLIST
-     ================================ */
-  .essentials-section { background: var(--ink); color: var(--paper); }
-  .essentials-section .section-title { color: var(--paper); }
-  .essentials-section .section-desc { color: rgba(247, 241, 227, 0.6); }
-  .ess-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
-  }
-  @media (max-width: 980px) { .ess-grid { grid-template-columns: 1fr; } }
-  .ess-card {
-    background: rgba(247, 241, 227, 0.04);
-    border: 1px solid rgba(247, 241, 227, 0.1);
-    padding: 32px;
-    border-radius: 4px;
-    transition: all 0.3s;
-  }
-  .ess-card:hover {
-    background: rgba(247, 241, 227, 0.08);
-    transform: translateY(-4px);
-  }
-  .ess-card .ico {
-    font-size: 32px;
-    margin-bottom: 16px;
-    display: block;
-  }
-  .ess-card h3 {
-    font-family: var(--display);
-    font-size: 22px;
-    font-weight: 700;
-    margin-bottom: 12px;
-  }
-  .ess-card .checklist {
-    list-style: none;
-    margin-top: 16px;
-  }
-  .ess-card .checklist li {
-    padding: 8px 0;
-    padding-left: 28px;
-    position: relative;
-    font-size: 14px;
-    color: rgba(247, 241, 227, 0.85);
-    cursor: pointer;
-    transition: color 0.2s;
-  }
-  .ess-card .checklist li::before {
-    content: "";
-    position: absolute;
-    left: 0; top: 11px;
-    width: 16px; height: 16px;
-    border: 1px solid rgba(247, 241, 227, 0.3);
-    border-radius: 3px;
-    transition: all 0.2s;
-  }
-  .ess-card .checklist li.done {
-    color: rgba(247, 241, 227, 0.4);
-    text-decoration: line-through;
-  }
-  .ess-card .checklist li.done::before {
-    background: var(--gold);
-    border-color: var(--gold);
-  }
-  .ess-card .checklist li.done::after {
-    content: "✓";
-    position: absolute;
-    left: 3px; top: 5px;
-    font-size: 11px;
-    font-weight: 900;
-    color: var(--ink);
-    line-height: 1;
-  }
-
-  /* ================================
-     PHRASES SECTION
-     ================================ */
-  .phrases-section { background: var(--cream); }
-  .phrases-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-  }
-  @media (max-width: 720px) { .phrases-grid { grid-template-columns: 1fr; } }
-  .phrase {
-    background: var(--paper);
-    border: 1px solid var(--line);
-    padding: 24px;
-    border-radius: 4px;
-    transition: all 0.25s;
-    cursor: pointer;
-  }
-  .phrase:hover { transform: translateY(-2px); box-shadow: 0 8px 30px -10px rgba(0,0,0,0.15); }
-  .phrase .pt {
-    font-family: var(--display);
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--terracotta);
-    margin-bottom: 4px;
-  }
-  .phrase .fr {
-    font-size: 13px;
-    color: var(--mute);
-    font-style: italic;
-  }
-  .phrase .pron {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--azulejo);
-    margin-top: 8px;
-    letter-spacing: 0.05em;
-  }
-
-  /* ================================
-     FOOTER
-     ================================ */
-  footer {
-    background: var(--ink);
-    color: var(--paper);
-    padding: 60px 0 30px;
-    margin-top: 0;
-  }
-  .foot-grid {
-    display: flex; align-items: center; justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 24px;
-    padding-bottom: 30px;
-    border-bottom: 1px solid rgba(247, 241, 227, 0.1);
-    margin-bottom: 24px;
-  }
-  footer .signature {
-    font-family: var(--display);
-    font-style: italic;
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--gold);
-  }
-  footer .meta-foot {
-    font-family: var(--mono);
-    font-size: 11px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: rgba(247, 241, 227, 0.5);
-  }
-
-  /* ================================
-     Animations on scroll
-     ================================ */
-  .reveal {
-    opacity: 0;
-    transform: translateY(40px);
-    transition: opacity 0.8s ease, transform 0.8s ease;
-  }
-  .reveal.in {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  /* Leaflet custom marker numbers */
-  .marker-num {
-    background: var(--terracotta);
-    color: var(--paper);
-    width: 32px; height: 32px;
-    border-radius: 50% 50% 50% 0;
-    transform: rotate(-45deg);
-    border: 3px solid var(--paper);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    display: flex; align-items: center; justify-content: center;
-    font-family: var(--display);
-    font-weight: 900;
-    font-size: 13px;
-  }
-  .marker-num span { transform: rotate(45deg); }
-  .marker-num.start { background: var(--olive); }
-  .marker-num.end { background: var(--azulejo); }
-
-  .leaflet-popup-content-wrapper {
-    border-radius: 4px;
-    font-family: var(--body);
-  }
-  .leaflet-popup-content {
-    margin: 14px 16px;
-  }
-  .popup-title {
-    font-family: var(--display);
-    font-weight: 700;
-    font-size: 16px;
-    margin-bottom: 4px;
-    color: var(--terracotta);
-  }
-  .popup-sub {
-    font-size: 12px;
-    color: var(--mute);
-  }
-</style>
+    <meta charset="utf-8">
+    <title>Roadtrip au Portugal 2026 – Itinéraire complet</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; background-color: #f8f8f8; color: #333; }
+        header { background-color: #4169e1; color: white; padding: 20px; text-align: center; }
+        header h1 { margin: 0 0 5px 0; font-size: 32px; }
+        header p { margin: 0; font-size: 16px; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        th, td { padding: 8px 10px; border: 1px solid #ddd; text-align: left; }
+        th { background-color: #f0f0f0; }
+        .gallery { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 40px; }
+        .gallery figure { flex: 1 1 30%; margin: 0; }
+        .gallery img { width: 100%; height: auto; border-radius: 8px; }
+        .gallery figcaption { text-align: center; margin-top: 8px; font-style: italic; font-size: 14px; }
+        .section { margin-bottom: 40px; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.05); }
+        .section h2 { margin-top: 0; color: #4169e1; }
+        .section p { line-height: 1.5; }
+        .buttons { margin-top: 10px; }
+        .buttons a { display: inline-block; background-color: #ff7f50; color: white; padding: 8px 14px; margin-right: 10px; margin-bottom: 8px; border-radius: 5px; text-decoration: none; font-weight: bold; }
+        .buttons a:hover { background-color: #e5673f; }
+        footer { text-align: center; padding: 15px 10px; background-color: #4169e1; color: white; font-size: 14px; }
+        @media (max-width: 768px) {
+            .gallery figure { flex: 1 1 100%; }
+        }
+    </style>
 </head>
 <body>
+    <header>
+        <h1>Roadtrip au Portugal &ndash; Juin 2026</h1>
+        <p>13&nbsp;jours d&rsquo;exploration de l&rsquo;Algarve au nord du Portugal avec hébergements et activités</p>
+    </header>
+    <div class="container">
+        <h2>Aperçu des étapes et hébergements</h2>
+        <!-- Table summarising each nuit with guesthouses and booking links -->
+        <table>
+            <thead>
+                <tr>
+                    <th>Jour / Date</th>
+                    <th>Destination</th>
+                    <th>Maison d&rsquo;hôtes</th>
+                    <th>Réservation</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Jour&nbsp;1 (20/06)</td>
+                    <td>Faro</td>
+                    <td>Casa&nbsp;Apollo&nbsp;Guesthouse</td>
+                    <td><a href="https://www.casa-apollo.com/" target="_blank">Réserver</a></td>
+                </tr>
+                <tr>
+                    <td>Jour&nbsp;2 (21/06)</td>
+                    <td>Lagos</td>
+                    <td>Dom&nbsp;Manuel&nbsp;I&nbsp;Charming&nbsp;Residence</td>
+                    <td><a href="https://www.dommanuelhotel.com/" target="_blank">Réserver</a></td>
+                </tr>
+                <tr>
+                    <td>Jour&nbsp;3 (22/06)</td>
+                    <td>Sagres / Évora</td>
+                    <td>Mareta&nbsp;View&nbsp;Boutique&nbsp;B&amp;B &amp; Imani&nbsp;Country&nbsp;House</td>
+                    <td>
+                        <a href="https://www.maretaview.com/" target="_blank">Mareta&nbsp;View</a><br>
+                        <a href="https://www.imani.pt/" target="_blank">Imani&nbsp;Country&nbsp;House</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Jour&nbsp;4 (23/06)</td>
+                    <td>Évora</td>
+                    <td>Imani&nbsp;Country&nbsp;House (2<sup>e</sup> nuit)</td>
+                    <td><a href="https://www.imani.pt/" target="_blank">Réserver</a></td>
+                </tr>
+                <tr>
+                    <td>Jour&nbsp;5&ndash;6 (24&ndash;25/06)</td>
+                    <td>Lisbonne</td>
+                    <td>Casa&nbsp;das&nbsp;Janelas&nbsp;com&nbsp;Vista / Teatro&nbsp;B&amp;B</td>
+                    <td>
+                        <a href="https://www.casadasjanelascomvista.com/" target="_blank">Casa&nbsp;das&nbsp;Janelas&nbsp;com&nbsp;Vista</a><br>
+                        <a href="https://www.teatrobbb.com/" target="_blank">Teatro&nbsp;B&amp;B</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Jour&nbsp;6 (25/06)</td>
+                    <td>Sintra</td>
+                    <td>Casa&nbsp;Miradoura / Aguamel&nbsp;Guesthouse</td>
+                    <td>
+                        <a href="https://www.sintracasamiradoura.com/" target="_blank">Casa&nbsp;Miradoura</a><br>
+                        <a href="https://www.aguamelsintra.com/" target="_blank">Aguamel&nbsp;Guesthouse</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Jour&nbsp;7 (26/06)</td>
+                    <td>Óbidos &amp; Nazaré</td>
+                    <td>Casa&nbsp;das&nbsp;Senhoras&nbsp;Rainhas / Villamar&nbsp;Style&nbsp;Maison</td>
+                    <td>
+                        <a href="https://senhorasrainhasobidos.com/" target="_blank">Casa&nbsp;das&nbsp;Senhoras&nbsp;Rainhas</a><br>
+                        <a href="https://www.villamar.pt/" target="_blank">Villamar&nbsp;Style&nbsp;Maison</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Jour&nbsp;8 (27/06)</td>
+                    <td>Coimbra</td>
+                    <td>República&nbsp;Guest&nbsp;House</td>
+                    <td><a href="https://republicaguesthouse.pt/" target="_blank">Réserver</a></td>
+                </tr>
+                <tr>
+                    <td>Jour&nbsp;9 (28/06)</td>
+                    <td>Vallée du Douro</td>
+                    <td>Casa&nbsp;de&nbsp;Casal&nbsp;de&nbsp;Loivos</td>
+                    <td><a href="http://www.casadecasaldeloivos.com/" target="_blank">Réserver</a></td>
+                </tr>
+                <tr>
+                    <td>Jour&nbsp;10 (29/06)</td>
+                    <td>Porto</td>
+                    <td>Guest&nbsp;House&nbsp;Douro / InPatio&nbsp;Guest&nbsp;House</td>
+                    <td>
+                        <a href="http://guesthousedouro.com/" target="_blank">Guest&nbsp;House&nbsp;Douro</a><br>
+                        <a href="https://www.inpatio.pt/" target="_blank">InPatio&nbsp;Guest&nbsp;House</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Jour&nbsp;11 (30/06)</td>
+                    <td>Batalha</td>
+                    <td>Casa&nbsp;do&nbsp;Outeiro&nbsp;–&nbsp;Arts&nbsp;&amp;&nbsp;Crafts&nbsp;Boutique&nbsp;Hotel</td>
+                    <td><a href="https://www.hotelcasadoouteiro.com/" target="_blank">Réserver</a></td>
+                </tr>
+                <tr>
+                    <td>Jour&nbsp;12&ndash;13 (1&ndash;2/07)</td>
+                    <td>Tavira / Ria&nbsp;Formosa</td>
+                    <td>Casa&nbsp;Beleza&nbsp;do&nbsp;Sul / Casa&nbsp;Modesta</td>
+                    <td>
+                        <a href="https://www.casabelezadosul.com/" target="_blank">Casa&nbsp;Beleza&nbsp;do&nbsp;Sul</a><br>
+                        <a href="https://casamodesta.pt/" target="_blank">Casa&nbsp;Modesta</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
 
-<!-- ============ NAV ============ -->
-<nav>
-  <div class="nav-inner">
-    <a href="#" class="logo"><span class="dot"></span>PortuTrip '26</a>
-    <div class="nav-links">
-      <a href="#carte">Carte</a>
-      <a href="#data">Budget</a>
-      <a href="#itineraire">Itinéraire</a>
-      <a href="#essentiels">Essentiels</a>
-      <a href="#phrases" class="cta-mini">Boa viagem ↗</a>
-    </div>
-  </div>
-</nav>
-
-<!-- ============ HERO ============ -->
-<header class="hero">
-  <div class="hero-bg"></div>
-  <div class="hero-wave"></div>
-
-  <div class="container hero-inner">
-    <div class="hero-grid">
-      <div>
-        <div class="eyebrow">
-          <span class="line"></span>
-          <span>Carnet de route · Juin 2026</span>
-        </div>
-        <h1 class="display">
-          Du <span class="italic">sud sauvage</span><br>
-          au nord <span class="strike">authentique</span><br>
-          du Portugal.
-        </h1>
-        <p class="hero-lede">
-          Treize jours, trois compagnons, neuf cents kilomètres
-          d'océan, de falaises ocre et de vin de Porto. Un voyage
-          pensé comme un livre — chaque chapitre, une étape.
-        </p>
-        <div class="hero-meta">
-          <span class="pill"><span class="icon">📍</span> Faro → Porto → Faro</span>
-          <span class="pill"><span class="icon">📅</span> 20 juin – 2 juillet</span>
-          <span class="pill"><span class="icon">👥</span> 3 voyageurs</span>
-          <span class="pill"><span class="icon">🚗</span> Voiture de location</span>
-        </div>
-
-        <div class="countdown" id="countdown">
-          <div class="cd-block"><div class="cd-num" id="cd-d">--</div><div class="cd-label">Jours</div></div>
-          <div class="cd-block"><div class="cd-num" id="cd-h">--</div><div class="cd-label">Heures</div></div>
-          <div class="cd-block"><div class="cd-num" id="cd-m">--</div><div class="cd-label">Min</div></div>
-          <div class="cd-block"><div class="cd-num" id="cd-s">--</div><div class="cd-label">Sec</div></div>
-        </div>
-      </div>
-
-      <div class="polaroid-stack">
-        <div class="polaroid">
-          <div class="polaroid-art" data-scene="cliffs"></div>
-          <div class="caption">Algarve, premier souffle</div>
-        </div>
-        <div class="polaroid">
-          <div class="polaroid-art" data-scene="lisbon"></div>
-          <div class="caption">Lisbonne, en jaune</div>
-        </div>
-        <div class="polaroid">
-          <div class="polaroid-art" data-scene="porto"></div>
-          <div class="caption">Porto, dernier verre</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</header>
-
-<!-- ============ STATS STRIP ============ -->
-<div class="stats-strip">
-  <div class="stats-grid">
-    <div class="stat">
-      <div class="stat-num" data-num="13">13</div>
-      <div class="stat-label">Jours de voyage</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num" data-num="1433">1433</div>
-      <div class="stat-label">Kilomètres parcourus</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num" data-num="12">12</div>
-      <div class="stat-label">Nuits sous les étoiles</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num" data-num="4700">4700€</div>
-      <div class="stat-label">Budget total (3 pers.)</div>
-    </div>
-  </div>
-</div>
-
-<!-- ============ MAP ============ -->
-<section id="carte" class="map-section">
-  <div class="container">
-    <div class="section-head reveal">
-      <div>
-        <div class="section-num">01 — La Carte</div>
-        <h2 class="section-title">D'une <span class="italic">pointe</span> à l'autre.</h2>
-      </div>
-      <p class="section-desc">
-        Du Cap Saint-Vincent à la vallée du Douro, l'itinéraire dessine
-        une diagonale océanique. Cliquez sur chaque étape pour la
-        découvrir.
-      </p>
-    </div>
-
-    <div class="map-wrap reveal">
-      <div id="map"></div>
-      <div class="map-legend">
-        <h3>Les escales</h3>
-        <div class="legend-item start">
-          <span class="legend-dot"></span>
-          <div>
-            <strong>Départ — Faro</strong><br>
-            <span style="color: var(--mute); font-size: 12px;">Aéroport · 20 juin</span>
-          </div>
-        </div>
-        <div class="legend-item"><span class="legend-dot"></span><div><strong>Lagos</strong><br><span style="color: var(--mute); font-size: 12px;">2 nuits · Algarve</span></div></div>
-        <div class="legend-item"><span class="legend-dot"></span><div><strong>Vila Nova de Milfontes</strong><br><span style="color: var(--mute); font-size: 12px;">1 nuit · Alentejo</span></div></div>
-        <div class="legend-item"><span class="legend-dot"></span><div><strong>Lisbonne</strong><br><span style="color: var(--mute); font-size: 12px;">4 nuits · Capitale</span></div></div>
-        <div class="legend-item"><span class="legend-dot"></span><div><strong>Nazaré</strong><br><span style="color: var(--mute); font-size: 12px;">1 nuit · Côte d'argent</span></div></div>
-        <div class="legend-item"><span class="legend-dot"></span><div><strong>Coimbra</strong><br><span style="color: var(--mute); font-size: 12px;">1 nuit · L'université</span></div></div>
-        <div class="legend-item end"><span class="legend-dot"></span><div><strong>Arrivée — Porto</strong><br><span style="color: var(--mute); font-size: 12px;">3 nuits · 2 juillet</span></div></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ DATA ============ -->
-<section id="data" class="charts-section">
-  <div class="container">
-    <div class="section-head reveal">
-      <div>
-        <div class="section-num">02 — Les Chiffres</div>
-        <h2 class="section-title">À <span class="italic">l'euro près</span>, au kilomètre près.</h2>
-      </div>
-      <p class="section-desc">
-        Estimation honnête, basée sur des prix de logement réels en 2026
-        pour trois personnes. Le café portugais reste, lui, sous-évalué.
-      </p>
-    </div>
-
-    <div class="charts-grid reveal">
-      <div class="chart-card">
-        <span class="corner">FIG. 01</span>
-        <h3>Répartition du budget</h3>
-        <p class="sub">Pour les 3 voyageurs, sur 13 jours</p>
-        <div class="chart-container">
-          <canvas id="budgetChart"></canvas>
-        </div>
-        <div class="budget-total">
-          Total : <span class="num">4 700€</span> · ≈ 1 567€/pers.
-        </div>
-      </div>
-
-      <div class="chart-card">
-        <span class="corner">FIG. 02</span>
-        <h3>Kilomètres par jour</h3>
-        <p class="sub">Maximum 3h de conduite quotidienne</p>
-        <div class="chart-container">
-          <canvas id="distanceChart"></canvas>
-        </div>
-        <div class="budget-total">
-          Le jour le plus long : <span class="num">555 km</span> pour redescendre vers Faro.
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ ITINERARY ============ -->
-<section id="itineraire" class="itin-section">
-  <div class="container">
-    <div class="section-head reveal">
-      <div>
-        <div class="section-num">03 — Le Journal</div>
-        <h2 class="section-title">Treize <span class="italic">chapitres</span>.</h2>
-      </div>
-      <p class="section-desc">
-        Choisissez un jour à gauche, le détail se déploie à droite.
-        Activités, hébergement, conseils — l'essentiel sans le superflu.
-      </p>
-    </div>
-
-    <div class="itin-grid reveal">
-      <div class="day-list" id="dayList"></div>
-      <div class="day-detail" id="dayDetail"></div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ ESSENTIALS / CHECKLIST ============ -->
-<section id="essentiels" class="essentials-section">
-  <div class="container">
-    <div class="section-head reveal">
-      <div>
-        <div class="section-num" style="color: var(--gold);">04 — Les Essentiels</div>
-        <h2 class="section-title">À <span class="italic">cocher</span> avant le grand départ.</h2>
-      </div>
-      <p class="section-desc">
-        Trois listes interactives. Vos coches sont sauvegardées localement
-        dans le navigateur — pas de panique si vous fermez l'onglet.
-      </p>
-    </div>
-
-    <div class="ess-grid reveal">
-      <div class="ess-card">
-        <span class="ico">📋</span>
-        <h3>Avant de partir</h3>
-        <ul class="checklist" data-key="prep">
-          <li>Vérifier la validité du passeport / CNI</li>
-          <li>Réserver la voiture de location (Via Verde inclus)</li>
-          <li>Bloquer les hébergements (Airbnb / Booking)</li>
-          <li>Réserver Grotte de Benagil + Palais Pena</li>
-          <li>Souscrire une assurance voyage</li>
-          <li>Télécharger Maps.me en hors-ligne</li>
-          <li>Acheter un adaptateur prise (type C/F)</li>
-        </ul>
-      </div>
-
-      <div class="ess-card">
-        <span class="ico">🎒</span>
-        <h3>Dans le sac</h3>
-        <ul class="checklist" data-key="bag">
-          <li>Maillot + serviette microfibre</li>
-          <li>Crème solaire SPF 50+ (l'Atlantique brûle)</li>
-          <li>Chaussures de rando légères</li>
-          <li>Coupe-vent (vent d'ouest à Sagres)</li>
-          <li>Sac étanche pour téléphone (kayak)</li>
-          <li>Trousse pharmacie + Smecta</li>
-          <li>Power bank + câbles</li>
-        </ul>
-      </div>
-
-      <div class="ess-card">
-        <span class="ico">💡</span>
-        <h3>Bons réflexes</h3>
-        <ul class="checklist" data-key="tips">
-          <li>Toujours payer en euros (pas en livres sterling)</li>
-          <li>Pourboire 5-10% au restau si service correct</li>
-          <li>Eau du robinet potable partout</li>
-          <li>Couvert/pain payants au restaurant = à refuser si pas voulu</li>
-          <li>Réserver les restos prisés à Lisbonne</li>
-          <li>Conduite calme — flics en civils en Algarve</li>
-          <li>Toujours dire "obrigado/obrigada" en remerciant</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ PHRASES ============ -->
-<section id="phrases" class="phrases-section">
-  <div class="container">
-    <div class="section-head reveal">
-      <div>
-        <div class="section-num">05 — Le Lexique</div>
-        <h2 class="section-title">Quelques <span class="italic">mots</span> pour la route.</h2>
-      </div>
-      <p class="section-desc">
-        Le portugais n'est pas l'espagnol. Quelques formules
-        suffisent pour faire sourire et passer du touriste au voyageur.
-      </p>
-    </div>
-
-    <div class="phrases-grid reveal">
-      <div class="phrase">
-        <div class="pt">Olá, tudo bem?</div>
-        <div class="fr">Salut, ça va ?</div>
-        <div class="pron">[o-LA, tou-dou bayn]</div>
-      </div>
-      <div class="phrase">
-        <div class="pt">Obrigado / Obrigada</div>
-        <div class="fr">Merci (homme / femme)</div>
-        <div class="pron">[o-bri-GA-dou / -da]</div>
-      </div>
-      <div class="phrase">
-        <div class="pt">Por favor</div>
-        <div class="fr">S'il vous plaît</div>
-        <div class="pron">[pour fa-VOR]</div>
-      </div>
-      <div class="phrase">
-        <div class="pt">A conta, por favor</div>
-        <div class="fr">L'addition, s'il vous plaît</div>
-        <div class="pron">[a KON-ta]</div>
-      </div>
-      <div class="phrase">
-        <div class="pt">Saúde!</div>
-        <div class="fr">Santé ! (à trinquer)</div>
-        <div class="pron">[sa-OU-deu]</div>
-      </div>
-      <div class="phrase">
-        <div class="pt">Uma cerveja, se faz favor</div>
-        <div class="fr">Une bière, s'il vous plaît</div>
-        <div class="pron">[ou-ma seur-VE-ja]</div>
-      </div>
-      <div class="phrase">
-        <div class="pt">Está delicioso!</div>
-        <div class="fr">C'est délicieux !</div>
-        <div class="pron">[esh-TA de-li-SYO-zou]</div>
-      </div>
-      <div class="phrase">
-        <div class="pt">Boa viagem</div>
-        <div class="fr">Bon voyage</div>
-        <div class="pron">[BO-a vi-A-jayn]</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ FOOTER ============ -->
-<footer>
-  <div class="container">
-    <div class="foot-grid">
-      <div class="signature">Até já, Portugal.</div>
-      <div class="meta-foot">PortuTrip '26 · 20.06 → 02.07</div>
-    </div>
-    <div style="display: flex; justify-content: space-between; font-size: 13px; color: rgba(247,241,227,0.5); flex-wrap: wrap; gap: 12px;">
-      <span>Fait avec ☕, sel, et un peu d'impatience.</span>
-      <span style="font-family: var(--mono); font-size: 11px;">© Nicolas & friends</span>
-    </div>
-  </div>
-</footer>
-
-<!-- ============ DATA & SCRIPT ============ -->
-<script>
-const itineraryData = [
-  {
-    day: 1, date: "Sam. 20 juin", title: "Arrivée & Cap sur l'Algarve",
-    route: "Faro → Lagos", km: 90, driveTime: "1h",
-    scene: "cliffs",
-    coords: [37.1028, -8.6738], place: "Lagos",
-    activities: [
-      "Arrivée à Faro, récupération de la voiture de location.",
-      "Route directe vers Lagos pour s'installer.",
-      "Balade de fin de journée dans le centre historique.",
-      "Premier dîner — sardines grillées et vinho verde."
-    ],
-    accommodation: "Lagos. Airbnb 2 chambres en bordure du centre, vers Praia de Porto de Mós. Budget : 150-170€/nuit.",
-    tip: "Vérifiez que la location inclut le 'Via Verde' pour le péage électronique de l'A22."
-  },
-  {
-    day: 2, date: "Dim. 21 juin", title: "Falaises & Grottes Marines",
-    route: "Lagos (boucle)", km: 40, driveTime: "1h",
-    scene: "cave",
-    coords: [37.0871, -8.4258], place: "Benagil",
-    activities: [
-      "Matin : kayak ou paddle vers la Grotte de Benagil (réservation indispensable).",
-      "Après-midi : randonnée sur Ponta da Piedade.",
-      "Baignade à Praia do Camilo (200 marches !).",
-      "Coucher de soleil sur les falaises."
-    ],
-    accommodation: "Lagos. Deuxième nuit dans le même Airbnb.",
-    tip: "Pique-niquez le midi : tomates, pão alentejano, queijo, et un melon. Économique et délicieux."
-  },
-  {
-    day: 3, date: "Lun. 22 juin", title: "Le Bout du Monde",
-    route: "Lagos → Sagres → Milfontes", km: 110, driveTime: "2h",
-    scene: "lighthouse",
-    coords: [37.0235, -8.9942], place: "Cabo de São Vicente",
-    activities: [
-      "Cap Saint-Vincent — pointe sud-ouest de l'Europe, vent garanti.",
-      "Remontée de la spectaculaire Costa Vicentina.",
-      "Arrêt à Praia do Amado, spot de surf mythique.",
-      "Arrivée au village blanc de Vila Nova de Milfontes."
-    ],
-    accommodation: "Milfontes. Une Guesthouse traditionnelle avec grande chambre triple : 120-150€/nuit.",
-    tip: "L'eau de l'Atlantique tourne autour de 17°C, même en juin. Combinaison conseillée si vous voulez nager longtemps."
-  },
-  {
-    day: 4, date: "Mar. 23 juin", title: "Alentejo & Capitale",
-    route: "Milfontes → Lisbonne", km: 190, driveTime: "2h30",
-    scene: "bridge",
-    coords: [38.7223, -9.1393], place: "Lisbonne",
-    activities: [
-      "Matinée sur les plages désertes de l'Alentejo.",
-      "Route vers le nord, traversée du Pont du 25 Avril.",
-      "Installation à Lisbonne en début d'après-midi.",
-      "Soirée tapas et petiscos dans le Bairro Alto."
-    ],
-    accommodation: "Lisbonne. Airbnb dans Alfama, Mouraria ou Graça (évitez Baixa, trop cher). 160-180€/nuit.",
-    tip: "Garez la voiture dans un parking en périphérie (10-15€/jour) et déplacez-vous en tram/à pied."
-  },
-  {
-    day: 5, date: "Mer. 24 juin", title: "Lisbonne Classique",
-    route: "Lisbonne (à pied)", km: 0, driveTime: "0h",
-    scene: "alfama",
-    coords: [38.7139, -9.1334], place: "Alfama",
-    activities: [
-      "Alfama et le Château de São Jorge dès le matin (avant la foule).",
-      "Déjeuner au Time Out Market.",
-      "Tram 28 historique, cathédrale Sé.",
-      "Coucher de soleil au Miradouro da Senhora do Monte."
-    ],
-    accommodation: "Lisbonne. Deuxième nuit, même appartement.",
-    tip: "Achetez le pass Navegante 24h pour utiliser trams et bus en illimité."
-  },
-  {
-    day: 6, date: "Jeu. 25 juin", title: "Belém & Culture Alternative",
-    route: "Lisbonne (Belém)", km: 15, driveTime: "0h30",
-    scene: "tower",
-    coords: [38.6979, -9.2065], place: "Belém",
-    activities: [
-      "Quartier de Belém : Tour de Belém et Monastère des Hiéronymites.",
-      "Pastéis de Belém — les vrais, depuis 1837.",
-      "LX Factory : friches industrielles transformées en quartier créatif.",
-      "Soirée fado dans une petite tasca d'Alfama."
-    ],
-    accommodation: "Lisbonne. Troisième nuit.",
-    tip: "Arrivez à la pâtisserie de Belém avant 9h30 : la queue peut s'étirer sur 30 minutes en pleine saison."
-  },
-  {
-    day: 7, date: "Ven. 26 juin", title: "Sintra, Contes de Fées",
-    route: "Lisbonne ↔ Sintra (en train)", km: 60, driveTime: "1h30",
-    scene: "palace",
-    coords: [38.7875, -9.3902], place: "Sintra",
-    activities: [
-      "Train depuis Rossio (plus simple que la voiture, parking infernal).",
-      "Palais de Pena coloré et excentrique.",
-      "Jardins mystérieux de la Quinta da Regaleira.",
-      "Retour à Lisbonne pour une dernière soirée."
-    ],
-    accommodation: "Lisbonne. Quatrième nuit — rester sur place plutôt que dormir à Sintra (cher et limité).",
-    tip: "Réservez Pena longtemps à l'avance, créneau strict. Bus 434 depuis la gare jusqu'au palais."
-  },
-  {
-    day: 8, date: "Sam. 27 juin", title: "Villages & Vagues Géantes",
-    route: "Lisbonne → Óbidos → Nazaré", km: 125, driveTime: "1h30",
-    scene: "castle",
-    coords: [39.6014, -9.0701], place: "Nazaré",
-    activities: [
-      "Récupération de la voiture et départ de Lisbonne.",
-      "Pause à Óbidos, village médiéval fortifié — Ginjinha dans un verre en chocolat.",
-      "Route vers Nazaré.",
-      "Montée au phare (Forte de São Miguel) — falaises et grandes ondes."
-    ],
-    accommodation: "Nazaré. Appartements de vacances en bord de mer : 130-160€/nuit.",
-    tip: "Prenez le funiculaire historique pour relier Praia (la plage) au Sítio (le quartier en hauteur)."
-  },
-  {
-    day: 9, date: "Dim. 28 juin", title: "Monastères & Université",
-    route: "Nazaré → Batalha → Coimbra", km: 110, driveTime: "1h30",
-    scene: "university",
-    coords: [40.2110, -8.4290], place: "Coimbra",
-    activities: [
-      "Matin : Monastère de Batalha, chef-d'œuvre gothique manuélin.",
-      "Route vers Coimbra, ancienne capitale.",
-      "Bibliothèque Joanina à l'Université — sublime, surveillée par des chauves-souris.",
-      "Soir : Fado de Coimbra dans les ruelles étudiantes."
-    ],
-    accommodation: "Coimbra. Auberges avec chambres privées triples excellentes : 100-140€/nuit.",
-    tip: "La Joanina se visite sur créneau horaire strict. Soyez ponctuels, ils ne laissent pas entrer en retard."
-  },
-  {
-    day: 10, date: "Lun. 29 juin", title: "Cap sur la Ville Invaincue",
-    route: "Coimbra → Aveiro → Porto", km: 130, driveTime: "1h30",
-    scene: "canal",
-    coords: [41.1496, -8.6109], place: "Porto",
-    activities: [
-      "Départ vers Aveiro, la « Venise portugaise » — canaux et moliceiros colorés.",
-      "Arrivée à Porto en début d'après-midi.",
-      "Première balade sur la Ribeira, les quais colorés du Douro.",
-      "Dîner Francesinha — le plat de l'apocalypse, à partager."
-    ],
-    accommodation: "Porto. Airbnb à Bonfim ou Cedofeita pour de l'espace dans le budget : 150-180€/nuit.",
-    tip: "La Francesinha est très copieuse. Une pour deux, et une salade pour la conscience."
-  },
-  {
-    day: 11, date: "Mar. 30 juin", title: "Porto & Vin",
-    route: "Porto (à pied)", km: 0, driveTime: "0h",
-    scene: "ribeira",
-    coords: [41.1389, -8.6109], place: "Porto Ribeira",
-    activities: [
-      "Pont Dom Luís I sur le tablier supérieur — vue imprenable.",
-      "Visite d'une cave à Vila Nova de Gaia + dégustation Tawny / LBV / Vintage.",
-      "Gare de São Bento (azulejos), Librairie Lello, Tour des Clercs.",
-      "Croisière des 6 ponts en fin de journée."
-    ],
-    accommodation: "Porto. Deuxième nuit.",
-    tip: "Pour la Librairie Lello (oui, celle qui aurait inspiré Harry Potter) achetez le billet en ligne — la queue est dissuasive."
-  },
-  {
-    day: 12, date: "Mer. 1 juillet", title: "Adieu Porto, retour vers le Sud",
-    route: "Porto → Faro", km: 555, driveTime: "5h30",
-    scene: "vineyard",
-    coords: [37.0193, -7.9304], place: "Faro",
-    activities: [
-      "Matinée à Porto : dernières photos sur la Ribeira, dernier café, derniers pastéis de nata.",
-      "Achats de souvenirs au Mercado do Bolhão ou dans les boutiques de Cedofeita.",
-      "Vers midi : départ plein sud par l'A1 puis A2 — 5h30 de route avec deux pauses.",
-      "Arrivée à Faro en début de soirée, installation près de l'aéroport.",
-      "Dernier dîner portugais dans la vieille ville de Faro (Cidade Velha)."
-    ],
-    accommodation: "Faro. Hôtel ou Airbnb dans la vieille ville (Cidade Velha) ou près de l'aéroport pour faciliter le départ. Budget : 120-150€/nuit.",
-    tip: "Longue route — alternez les conducteurs, prévoyez pause déjeuner à Coimbra ou Fátima (~à mi-chemin). Faites le plein la veille du retour pour éviter le rush du matin."
-  },
-  {
-    day: 13, date: "Jeu. 2 juillet", title: "Vol retour",
-    route: "Faro → Aéroport", km: 8, driveTime: "0h15",
-    scene: "farewell",
-    coords: [37.0144, -7.9659], place: "Aéroport Faro",
-    activities: [
-      "Petit-déjeuner tranquille : le dernier café galão portugais.",
-      "Restitution de la voiture de location à l'aéroport de Faro (prévoir 1h avant le vol).",
-      "Enregistrement et embarquement.",
-      "Vol retour à 11h."
-    ],
-    accommodation: "Départ.",
-    tip: "Soyez à l'aéroport au plus tard à 9h pour un vol à 11h. Le retour de voiture peut prendre du temps en haute saison."
-  }
-];
-
-/* ===== Populate hero polaroid illustrations ===== */
-document.querySelectorAll('.polaroid-art').forEach(el => {
-  const scene = el.dataset.scene;
-  const labels = { cliffs: 'Algarve', lisbon: 'Lisboa', porto: 'Porto' };
-  const sceneMap = { cliffs: 'cliffs', lisbon: 'alfama', porto: 'ribeira' };
-  el.innerHTML = makeSceneSVG(sceneMap[scene] || 'cliffs', labels[scene] || '');
-});
-
-/* ===== Countdown ===== */
-const target = new Date("2026-06-20T07:00:00").getTime();
-function updateCountdown() {
-  const now = Date.now();
-  const diff = target - now;
-  if (diff < 0) {
-    document.getElementById("cd-d").textContent = "✈";
-    return;
-  }
-  const d = Math.floor(diff / 86400000);
-  const h = Math.floor((diff / 3600000) % 24);
-  const m = Math.floor((diff / 60000) % 60);
-  const s = Math.floor((diff / 1000) % 60);
-  document.getElementById("cd-d").textContent = d;
-  document.getElementById("cd-h").textContent = String(h).padStart(2, '0');
-  document.getElementById("cd-m").textContent = String(m).padStart(2, '0');
-  document.getElementById("cd-s").textContent = String(s).padStart(2, '0');
-}
-updateCountdown();
-setInterval(updateCountdown, 1000);
-
-/* ===== Day list ===== */
-const dayList = document.getElementById("dayList");
-itineraryData.forEach((d, i) => {
-  const btn = document.createElement("button");
-  btn.className = "day-btn" + (i === 0 ? " active" : "");
-  btn.dataset.idx = i;
-  btn.innerHTML = `
-    <div class="d-num">Jour ${d.day} · ${d.date}</div>
-    <div class="d-title">${d.title}</div>
-    <div class="d-route">${d.route} · ${d.km} km</div>
-  `;
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".day-btn").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    renderDay(i);
-  });
-  dayList.appendChild(btn);
-});
-
-/* ===== Day detail render ===== */
-/* ===== SVG scene generator (illustrations inline) ===== */
-function makeSceneSVG(scene, label) {
-  // Palette per scene
-  const palettes = {
-    cliffs:     { sky: '#f4d4b8', sea: '#2e7d8f', rock: '#c0492a', accent: '#8a2f17' },
-    cave:       { sky: '#1d4f7c', sea: '#3b7ab0', rock: '#d4a017', accent: '#f4d4b8' },
-    lighthouse: { sky: '#f1e6d1', sea: '#1d4f7c', rock: '#6b6321', accent: '#c0492a' },
-    bridge:     { sky: '#f4c98c', sea: '#1d4f7c', rock: '#c0492a', accent: '#1a1614' },
-    alfama:     { sky: '#f4d4b8', sea: '#c0492a', rock: '#d4a017', accent: '#8a2f17' },
-    tower:      { sky: '#f1c97d', sea: '#2e7d8f', rock: '#f1e6d1', accent: '#c0492a' },
-    palace:     { sky: '#3b7ab0', sea: '#6b6321', rock: '#c0492a', accent: '#d4a017' },
-    castle:     { sky: '#f4c98c', sea: '#6b6321', rock: '#f1e6d1', accent: '#8a2f17' },
-    university: { sky: '#d4a017', sea: '#6b6321', rock: '#8a2f17', accent: '#f1e6d1' },
-    canal:      { sky: '#f4d4b8', sea: '#3b7ab0', rock: '#c0492a', accent: '#d4a017' },
-    ribeira:    { sky: '#f4c98c', sea: '#2e7d8f', rock: '#c0492a', accent: '#d4a017' },
-    vineyard:   { sky: '#f4d4b8', sea: '#6b6321', rock: '#8a2f17', accent: '#d4a017' },
-    farewell:   { sky: '#c0492a', sea: '#8a2f17', rock: '#d4a017', accent: '#f1e6d1' }
-  };
-  const p = palettes[scene] || palettes.cliffs;
-
-  // Scene content (foreground silhouettes)
-  let fg = '';
-  if (scene === 'cliffs' || scene === 'cave') {
-    fg = `
-      <path d="M0,180 Q120,140 200,170 T400,160 T600,180 T800,170 L800,280 L0,280 Z" fill="${p.rock}" opacity="0.95"/>
-      <path d="M0,210 Q150,180 280,200 T520,195 T800,210 L800,280 L0,280 Z" fill="${p.accent}" opacity="0.7"/>
-      <ellipse cx="160" cy="178" rx="42" ry="30" fill="${p.rock}"/>
-      <ellipse cx="460" cy="172" rx="36" ry="26" fill="${p.rock}"/>
-      <ellipse cx="640" cy="186" rx="48" ry="32" fill="${p.rock}"/>
-      ${scene === 'cave' ? '<path d="M380,210 Q420,170 460,210 L460,250 L380,250 Z" fill="#0a0a0a" opacity="0.6"/>' : ''}
-    `;
-  } else if (scene === 'lighthouse') {
-    fg = `
-      <path d="M0,210 L800,200 L800,280 L0,280 Z" fill="${p.rock}"/>
-      <rect x="430" y="80" width="32" height="150" fill="${p.accent}"/>
-      <rect x="425" y="75" width="42" height="10" fill="${p.accent}"/>
-      <polygon points="425,75 467,75 446,55" fill="${p.accent}"/>
-      <rect x="438" y="90" width="16" height="12" fill="${p.sky}" opacity="0.8"/>
-      <path d="M448,60 L520,30 L600,40" stroke="${p.accent}" stroke-width="2" opacity="0.4" fill="none"/>
-    `;
-  } else if (scene === 'bridge') {
-    fg = `
-      <path d="M0,220 L800,220 L800,280 L0,280 Z" fill="${p.sea}"/>
-      <line x1="0" y1="180" x2="800" y2="180" stroke="${p.rock}" stroke-width="3"/>
-      <line x1="0" y1="190" x2="800" y2="190" stroke="${p.rock}" stroke-width="2"/>
-      <path d="M150,180 Q400,80 650,180" stroke="${p.accent}" stroke-width="4" fill="none"/>
-      <line x1="150" y1="80" x2="150" y2="180" stroke="${p.accent}" stroke-width="6"/>
-      <line x1="650" y1="80" x2="650" y2="180" stroke="${p.accent}" stroke-width="6"/>
-      ${Array.from({length:8}, (_,i)=>`<line x1="${200+i*60}" y1="${100+Math.abs(i-3.5)*15}" x2="${200+i*60}" y2="180" stroke="${p.accent}" stroke-width="1.5" opacity="0.7"/>`).join('')}
-    `;
-  } else if (scene === 'alfama') {
-    fg = `
-      <path d="M0,210 L800,210 L800,280 L0,280 Z" fill="${p.rock}" opacity="0.3"/>
-      ${[80,180,290,400,510,620,720].map((x,i)=>{
-        const h = 90 + (i%3)*30;
-        const c = i%2 ? p.rock : p.accent;
-        return `<rect x="${x}" y="${220-h}" width="70" height="${h}" fill="${c}"/>
-                <polygon points="${x-4},${220-h} ${x+74},${220-h} ${x+35},${220-h-25}" fill="${p.sea}"/>
-                <rect x="${x+10}" y="${220-h+15}" width="14" height="20" fill="${p.sky}" opacity="0.7"/>
-                <rect x="${x+44}" y="${220-h+15}" width="14" height="20" fill="${p.sky}" opacity="0.7"/>`;
-      }).join('')}
-      <rect x="350" y="240" width="100" height="20" fill="${p.accent}"/>
-      <circle cx="370" cy="265" r="8" fill="#1a1614"/>
-      <circle cx="430" cy="265" r="8" fill="#1a1614"/>
-    `;
-  } else if (scene === 'tower') {
-    fg = `
-      <path d="M0,220 L800,220 L800,280 L0,280 Z" fill="${p.sea}"/>
-      <rect x="340" y="100" width="120" height="140" fill="${p.rock}"/>
-      <rect x="330" y="90" width="140" height="20" fill="${p.rock}"/>
-      <rect x="360" y="60" width="80" height="50" fill="${p.rock}"/>
-      ${[0,1,2,3].map(i=>`<rect x="${340+i*30}" y="85" width="8" height="12" fill="${p.rock}"/>`).join('')}
-      <rect x="385" y="160" width="30" height="50" fill="${p.accent}"/>
-      <rect x="360" y="130" width="20" height="25" fill="${p.sky}" opacity="0.6"/>
-      <rect x="420" y="130" width="20" height="25" fill="${p.sky}" opacity="0.6"/>
-    `;
-  } else if (scene === 'palace') {
-    fg = `
-      <path d="M0,220 Q200,190 400,210 T800,210 L800,280 L0,280 Z" fill="${p.sea}"/>
-      <rect x="280" y="140" width="80" height="80" fill="${p.rock}"/>
-      <rect x="360" y="120" width="100" height="100" fill="${p.accent}"/>
-      <rect x="460" y="150" width="70" height="70" fill="${p.rock}"/>
-      <polygon points="280,140 360,140 320,100" fill="${p.accent}"/>
-      <polygon points="360,120 460,120 410,80" fill="${p.rock}"/>
-      <polygon points="460,150 530,150 495,115" fill="${p.accent}"/>
-      <circle cx="410" cy="160" r="14" fill="${p.sky}" opacity="0.5"/>
-      <rect x="403" y="190" width="14" height="30" fill="${p.sky}" opacity="0.4"/>
-    `;
-  } else if (scene === 'castle') {
-    fg = `
-      <path d="M0,220 L800,220 L800,280 L0,280 Z" fill="${p.sea}" opacity="0.6"/>
-      <path d="M0,200 L800,210 L800,280 L0,280 Z" fill="${p.rock}" opacity="0.5"/>
-      ${[60,180,310,430,560,690].map(x=>`
-        <rect x="${x}" y="170" width="70" height="50" fill="${p.accent}"/>
-        <polygon points="${x-4},170 ${x+74},170 ${x+35},150" fill="${p.rock}"/>
-        <rect x="${x+25}" y="190" width="20" height="30" fill="${p.sea}"/>
-      `).join('')}
-      <rect x="380" y="100" width="60" height="120" fill="${p.accent}"/>
-      <rect x="370" y="90" width="80" height="14" fill="${p.accent}"/>
-      ${[0,1,2,3].map(i=>`<rect x="${370+i*20}" y="86" width="8" height="10" fill="${p.accent}"/>`).join('')}
-    `;
-  } else if (scene === 'university') {
-    fg = `
-      <path d="M0,220 L800,220 L800,280 L0,280 Z" fill="${p.rock}" opacity="0.4"/>
-      <rect x="250" y="120" width="300" height="100" fill="${p.accent}"/>
-      <polygon points="240,120 560,120 400,70" fill="${p.rock}"/>
-      <rect x="380" y="160" width="40" height="60" fill="${p.rock}"/>
-      ${[270,320,440,490].map(x=>`<rect x="${x}" y="140" width="25" height="40" fill="${p.sky}" opacity="0.6"/>`).join('')}
-      <circle cx="400" cy="100" r="6" fill="${p.sky}"/>
-      <rect x="397" y="100" width="6" height="20" fill="${p.sky}"/>
-    `;
-  } else if (scene === 'canal') {
-    fg = `
-      <path d="M0,200 L800,210 L800,280 L0,280 Z" fill="${p.sea}"/>
-      ${[120,300,500,680].map((x,i)=>{
-        const c = [p.rock, p.accent, p.sky, '#f4c98c'][i];
-        return `<path d="M${x},190 Q${x+50},170 ${x+120},190 L${x+115},215 Q${x+50},195 ${x+5},215 Z" fill="${c}"/>
-                <line x1="${x+60}" y1="${175}" x2="${x+60}" y2="${130}" stroke="${p.accent}" stroke-width="2"/>
-                <path d="M${x+60},130 L${x+95},150 L${x+60},155 Z" fill="${c}"/>`;
-      }).join('')}
-      ${[80,250,440,620].map(x=>`<rect x="${x}" y="120" width="40" height="80" fill="${p.rock}"/>`).join('')}
-    `;
-  } else if (scene === 'ribeira') {
-    fg = `
-      <path d="M0,210 L800,220 L800,280 L0,280 Z" fill="${p.sea}"/>
-      ${[40,110,180,250,320,390,460,530,600,670,740].map((x,i)=>{
-        const h = 100 + (i%4)*25;
-        const c = [p.rock, p.accent, '#d4a017', '#f4c98c', '#8a2f17'][i%5];
-        return `<rect x="${x}" y="${220-h}" width="62" height="${h}" fill="${c}"/>
-                <polygon points="${x-3},${220-h} ${x+65},${220-h} ${x+31},${220-h-18}" fill="${p.rock}" opacity="0.7"/>`;
-      }).join('')}
-      <path d="M50,220 Q400,180 750,225" stroke="${p.accent}" stroke-width="3" fill="none" opacity="0.6"/>
-      <line x1="380" y1="60" x2="380" y2="220" stroke="${p.accent}" stroke-width="2" opacity="0.5"/>
-      <line x1="420" y1="60" x2="420" y2="220" stroke="${p.accent}" stroke-width="2" opacity="0.5"/>
-    `;
-  } else if (scene === 'vineyard') {
-    fg = `
-      <path d="M0,160 Q200,130 400,150 T800,140 L800,280 L0,280 Z" fill="${p.sea}" opacity="0.5"/>
-      <path d="M0,200 Q150,170 380,190 T800,180 L800,280 L0,280 Z" fill="${p.rock}" opacity="0.6"/>
-      <path d="M0,240 Q200,215 500,235 T800,225 L800,280 L0,280 Z" fill="${p.accent}"/>
-      ${[0,1,2,3,4,5,6,7].map(i=>`<line x1="${i*100}" y1="220" x2="${i*100+30}" y2="280" stroke="${p.rock}" stroke-width="1" opacity="0.5"/>`).join('')}
-      ${[0,1,2,3,4,5,6].map(i=>`<line x1="${i*120+40}" y1="180" x2="${i*120+70}" y2="220" stroke="${p.accent}" stroke-width="1" opacity="0.6"/>`).join('')}
-    `;
-  } else if (scene === 'farewell') {
-    fg = `
-      <circle cx="400" cy="140" r="60" fill="${p.rock}" opacity="0.8"/>
-      <path d="M0,200 Q200,170 400,200 T800,200 L800,280 L0,280 Z" fill="${p.sea}" opacity="0.7"/>
-      <path d="M0,240 Q300,220 600,250 T800,240 L800,280 L0,280 Z" fill="${p.accent}"/>
-      <path d="M180,240 L260,180 L340,240 Z" fill="${p.rock}" opacity="0.6"/>
-      <path d="M500,240 L580,200 L660,240 Z" fill="${p.rock}" opacity="0.6"/>
-      ${[100,300,500,700].map(x=>`<circle cx="${x}" cy="60" r="2" fill="${p.accent}"/>`).join('')}
-    `;
-  }
-
-  // The "stamp" with the place name
-  const stamp = `
-    <g opacity="0.85">
-      <rect x="540" y="30" width="220" height="58" fill="none" stroke="${p.accent}" stroke-width="2" stroke-dasharray="4 3" rx="2"/>
-      <text x="650" y="58" font-family="Fraunces, serif" font-size="11" font-weight="700" letter-spacing="3" text-anchor="middle" fill="${p.accent}">PORTUGAL · 2026</text>
-      <text x="650" y="78" font-family="Fraunces, serif" font-style="italic" font-size="18" font-weight="700" text-anchor="middle" fill="${p.accent}">${(label || '').toUpperCase()}</text>
-    </g>
-  `;
-
-  return `<svg class="day-hero-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 280" preserveAspectRatio="xMidYMid slice">
-    <rect width="800" height="280" fill="${p.sky}"/>
-    <circle cx="120" cy="60" r="35" fill="${p.accent}" opacity="0.2"/>
-    <circle cx="700" cy="100" r="55" fill="${p.rock}" opacity="0.15"/>
-    ${fg}
-    ${stamp}
-  </svg>`;
-}
-
-
-function renderDay(i) {
-  const d = itineraryData[i];
-  const panel = document.getElementById("dayDetail");
-  panel.style.opacity = "0";
-  setTimeout(() => {
-    const svgBg = makeSceneSVG(d.scene || 'cliffs', d.place);
-    panel.innerHTML = `
-      <div class="day-hero" data-day="${d.day}">
-        ${svgBg}
-        <div class="day-hero-content">
-          <div class="d-day">Jour ${d.day} · ${d.date}</div>
-          <h2>${d.title}</h2>
-        </div>
-      </div>
-      <div class="day-body">
-        <div class="day-meta-row">
-          <div class="day-meta-item">
-            <div class="label">Trajet</div>
-            <div class="val">${d.route}</div>
-          </div>
-          <div class="day-meta-item">
-            <div class="label">Distance</div>
-            <div class="val">${d.km} km</div>
-          </div>
-          <div class="day-meta-item">
-            <div class="label">Conduite</div>
-            <div class="val">${d.driveTime}</div>
-          </div>
+        <!-- Gallery with illustrative images -->
+        <div class="gallery">
+            <figure>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/5f/Ria_Formosa_lagoon.jpg" alt="Lagune de Ria Formosa">
+                <figcaption>Lagune de Ria&nbsp;Formosa</figcaption>
+            </figure>
+            <figure>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/0/09/Lagos_-_Ponta_da_Piedade.jpg" alt="Ponta da Piedade">
+                <figcaption>Ponta&nbsp;da&nbsp;Piedade</figcaption>
+            </figure>
+            <figure>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/4/4b/Vineyards_in_The_Douro_Valley.jpg" alt="Vallée du Douro">
+                <figcaption>Vallée&nbsp;du&nbsp;Douro</figcaption>
+            </figure>
         </div>
 
-        <div class="day-cols">
-          <div class="day-section">
-            <h4>Le programme</h4>
-            <ul class="activities">
-              ${d.activities.map(a => `<li>${a}</li>`).join("")}
-            </ul>
-          </div>
-          <div class="day-section">
-            <div class="info-card lodging">
-              <h5><span>🛏️</span> Stratégie hébergement</h5>
-              <p>${d.accommodation}</p>
+        <!-- Detailed itinerary sections -->
+        <div id="jour1" class="section">
+            <h2>Jour&nbsp;1 – Faro &amp; lagune de Ria Formosa</h2>
+            <p>Arrivée à l&rsquo;aéroport de Faro, prise en charge de la voiture de location et découverte du centre historique (Arco da Vila, cathédrale Sé, rues pavées et port de plaisance). En après‑midi, embarquez pour une excursion en bateau dans la lagune de Ria Formosa, un labyrinthe de canaux, îlots et marais où vivent de nombreuses espèces d&rsquo;oiseaux【193178751652903†L102-L131】.</p>
+            <div class="buttons">
+                <a href="https://www.casa-apollo.com/" target="_blank">Réserver hébergement (Casa Apollo)</a>
+                <a href="https://formosamar.com/" target="_blank">Réserver activité (excursion en bateau)</a>
             </div>
-            <div class="info-card tip">
-              <h5><span>💡</span> Le conseil malin</h5>
-              <p>${d.tip}</p>
-            </div>
-          </div>
         </div>
-      </div>
-    `;
-    panel.style.transition = "opacity 0.4s";
-    panel.style.opacity = "1";
-  }, 150);
-}
-renderDay(0);
 
-/* ===== Map ===== */
-const map = L.map('map', { scrollWheelZoom: false }).setView([39.5, -8.5], 7);
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '© OpenStreetMap contributors',
-  maxZoom: 18
-}).addTo(map);
+        <div id="jour2" class="section">
+            <h2>Jour&nbsp;2 – Lagos et Ponta da Piedade</h2>
+            <p>Route vers Lagos (≈85 km). Visitez les plages de Praia Dona Ana et Praia do Camilo, la vieille ville et son marché historique. L&rsquo;après‑midi, explorez Ponta da Piedade, des piliers de calcaire doré formant un labyrinthe de grottes marines et criques aux eaux turquoise【36027168262755†L10-L30】. Une passerelle en bois et un escalier de 181 marches mènent à des plages secrètes【36027168262755†L40-L60】.</p>
+            <div class="buttons">
+                <a href="https://www.dommanuelhotel.com/" target="_blank">Réserver hébergement (Dom Manuel I)</a>
+                <a href="https://www.getyourguide.com/ponta-da-piedade-lagoa-l35867/?partner_id=Q9OMX9D" target="_blank">Réserver activité (croisière Ponta da Piedade)</a>
+            </div>
+        </div>
 
-const routePoints = [];
-itineraryData.forEach((d, i) => {
-  if (!d.coords) return;
-  routePoints.push(d.coords);
-  let cls = "marker-num";
-  if (i === 0) cls += " start";
-  if (i === itineraryData.length - 1) cls += " end";
-  const icon = L.divIcon({
-    className: '',
-    html: `<div class="${cls}"><span>${d.day}</span></div>`,
-    iconSize: [32, 32],
-    iconAnchor: [16, 32]
-  });
-  const m = L.marker(d.coords, { icon }).addTo(map);
-  m.bindPopup(`
-    <div class="popup-title">J${d.day} · ${d.place}</div>
-    <div class="popup-sub">${d.title}<br>${d.route}</div>
-  `);
-  m.on('click', () => {
-    document.getElementById("itineraire").scrollIntoView({ behavior: "smooth" });
-    setTimeout(() => {
-      document.querySelectorAll(".day-btn").forEach(b => b.classList.remove("active"));
-      const btn = document.querySelector(`.day-btn[data-idx="${i}"]`);
-      if (btn) btn.classList.add("active");
-      renderDay(i);
-    }, 800);
-  });
-});
+        <div id="jour3" class="section">
+            <h2>Jour&nbsp;3 – Monchique, Silves et route vers Évora</h2>
+            <p>Partez pour un détour par le village de montagne de Monchique et son sommet du Fóia, puis rejoignez Silves, l’ancienne capitale maure. Le château de Silves, en grès rouge, fut construit entre le VIIIᵉ et le XIIIᵉ siècle et offre une vue remarquable【554983847112741†L486-L503】. En fin de journée, prenez la route vers Évora (≈210 km) en traversant les paysages d’oliviers et de chênes‑lièges de l’Alentejo.</p>
+            <div class="buttons">
+                <a href="https://www.maretaview.com/" target="_blank">Réserver hébergement (Mareta View B&amp;B – option si nuit à Sagres)</a>
+                <a href="https://www.imani.pt/" target="_blank">Réserver hébergement (Imani Country House – Évora)</a>
+            </div>
+        </div>
 
-L.polyline(routePoints, {
-  color: '#c0492a',
-  weight: 3,
-  opacity: 0.6,
-  dashArray: '8, 6'
-}).addTo(map);
+        <div id="jour4" class="section">
+            <h2>Jour&nbsp;4 – Évora, ville classée UNESCO</h2>
+            <p>Explorez Évora, ville inscrite au patrimoine mondial pour son mélange de monuments romains, médiévaux et baroques【542590760980081†L328-L343】. Visitez le temple de Diane, la cathédrale et les ruelles de Giraldo. Ne manquez pas la Capela dos Ossos (Chapelle des Os), dont les murs et piliers sont décorés d’environ 5&nbsp;000 crânes【181534152305380†L71-L106】.</p>
+            <div class="buttons">
+                <a href="https://www.imani.pt/" target="_blank">Réserver hébergement (Imani Country House)</a>
+            </div>
+        </div>
 
-map.fitBounds(L.latLngBounds(routePoints), { padding: [40, 40] });
+        <div id="jour5" class="section">
+            <h2>Jour&nbsp;5 – Lisbonne : Alfama et Belém</h2>
+            <p>Arrivée à Lisbonne. Montez au château São Jorge pour une vue panoramique, puis perdez‑vous dans le dédale de ruelles d’Alfama en empruntant le célèbre tramway 28. Dans l’après‑midi, rendez‑vous à Belém pour visiter le monastère des Hiéronymites et la Tour de Belém, chefs‑d’œuvre de l’architecture manuéline liés aux grandes découvertes maritimes【121267910653707†L18-L37】【839282312495504†L359-L375】. Dégustez un pastel de Belém encore tiède.</p>
+            <div class="buttons">
+                <a href="https://www.casadasjanelascomvista.com/" target="_blank">Réserver hébergement (Casa das Janelas&nbsp;com Vista)</a>
+                <a href="https://www.teatrobbb.com/" target="_blank">Réserver hébergement (Teatro B&amp;B)</a>
+                <a href="https://www.parquesdesintra.pt/pt/parques-monumentos/parque-e-palacio-nacional-da-pena/" target="_blank">Réserver activité (billets – Palais de Pena)</a>
+            </div>
+        </div>
 
-/* ===== Budget chart ===== */
-new Chart(document.getElementById("budgetChart"), {
-  type: 'doughnut',
-  data: {
-    labels: ['Logement (12 nuits)', 'Nourriture', 'Voiture & Péages', 'Activités & Divers'],
-    datasets: [{
-      data: [1980, 1500, 750, 470],
-      backgroundColor: ['#c0492a', '#d4a017', '#1d4f7c', '#6b6321'],
-      borderColor: '#fdfaf2',
-      borderWidth: 3,
-      hoverOffset: 12
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    cutout: '65%',
-    plugins: {
-      legend: {
-        position: 'bottom',
-        labels: {
-          boxWidth: 12,
-          padding: 16,
-          font: { family: 'Inter', size: 12, weight: '500' },
-          color: '#1a1614'
-        }
-      },
-      tooltip: {
-        backgroundColor: '#1a1614',
-        titleFont: { family: 'Fraunces', size: 14, weight: '700' },
-        bodyFont: { family: 'Inter', size: 13 },
-        padding: 12,
-        callbacks: {
-          label: c => `${c.label}: ${c.parsed}€`
-        }
-      }
-    }
-  }
-});
+        <div id="jour6" class="section">
+            <h2>Jour&nbsp;6 – Sintra</h2>
+            <p>Quittez Lisbonne pour Sintra (≈30 min). Visitez le palais de Pena, un palais romantique aux couleurs vives construit par le roi Ferdinand II en mêlant styles gothique, manuélin, islamique et Renaissance【233076454067074†L15-L33】. Promenez‑vous ensuite dans le parc luxuriant qui entoure le palais et admirez la vue depuis le château des Maures. Terminez par la Quinta da Regaleira et son célèbre puits initiatique.</p>
+            <div class="buttons">
+                <a href="https://www.sintracasamiradoura.com/" target="_blank">Réserver hébergement (Casa Miradoura)</a>
+                <a href="https://www.aguamelsintra.com/" target="_blank">Réserver hébergement (Aguamel Guesthouse)</a>
+                <a href="https://www.parquesdesintra.pt/pt/parques-monumentos/parque-e-palacio-nacional-da-pena/" target="_blank">Réserver activité (billet Pena)</a>
+            </div>
+        </div>
 
-/* ===== Distance chart ===== */
-new Chart(document.getElementById("distanceChart"), {
-  type: 'bar',
-  data: {
-    labels: itineraryData.map(d => `J${d.day}`),
-    datasets: [{
-      data: itineraryData.map(d => d.km),
-      backgroundColor: ctx => {
-        const v = ctx.raw;
-        if (v === 0) return '#e0d4b8';
-        if (v > 150) return '#c0492a';
-        return '#1d4f7c';
-      },
-      borderRadius: 4,
-      barThickness: 18
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        backgroundColor: '#1a1614',
-        titleFont: { family: 'Fraunces', size: 14, weight: '700' },
-        bodyFont: { family: 'Inter', size: 13 },
-        padding: 12,
-        callbacks: { label: c => `${c.parsed.y} km de route` }
-      }
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        grid: { color: 'rgba(26,22,20,0.06)' },
-        ticks: { font: { family: 'JetBrains Mono', size: 11 }, color: '#7a7268' }
-      },
-      x: {
-        grid: { display: false },
-        ticks: { font: { family: 'JetBrains Mono', size: 11 }, color: '#7a7268' }
-      }
-    }
-  }
-});
+        <div id="jour7" class="section">
+            <h2>Jour&nbsp;7 – Óbidos &amp; Nazaré</h2>
+            <p>Depuis Lisbonne, rejoignez le village médiéval d’Óbidos. Flânez dans ses ruelles pavées, admirez les maisons blanchies à la chaux couvertes de bougainvilliers et explorez le château classé parmi les « Sept Merveilles du Portugal »【456893247502062†L100-L153】. Continuez vers Nazaré, connue pour ses vagues géantes grâce au canyon sous‑marin qui attire les surfeurs du monde entier【309138163985808†L33-L69】. Même en été, la vue depuis le fort de São Miguel Arcanjo est impressionnante【309138163985808†L91-L105】.</p>
+            <div class="buttons">
+                <a href="https://senhorasrainhasobidos.com/" target="_blank">Réserver hébergement (Casa das Senhoras Rainhas)</a>
+                <a href="https://www.villamar.pt/" target="_blank">Réserver hébergement (Villamar Style Maison)</a>
+            </div>
+        </div>
 
-/* ===== Checklists with localStorage ===== */
-document.querySelectorAll('.checklist').forEach(list => {
-  const key = 'portutrip_' + list.dataset.key;
-  const saved = JSON.parse(localStorage.getItem(key) || '[]');
-  list.querySelectorAll('li').forEach((li, idx) => {
-    if (saved.includes(idx)) li.classList.add('done');
-    li.addEventListener('click', () => {
-      li.classList.toggle('done');
-      const done = [];
-      list.querySelectorAll('li').forEach((l, i) => {
-        if (l.classList.contains('done')) done.push(i);
-      });
-      localStorage.setItem(key, JSON.stringify(done));
-    });
-  });
-});
+        <div id="jour8" class="section">
+            <h2>Jour&nbsp;8 – Coimbra</h2>
+            <p>Poursuivez vers Coimbra, ville universitaire fondée au XIIᵉ siècle. La colline de l’Alcáçova abrite l’université depuis 1537 et son emblématique bibliothèque Joanine et le palais royal【178487425824450†L359-L370】. Parcourez les rues médiévales et goûtez au « Leitão à Bairrada », spécialité régionale.</p>
+            <div class="buttons">
+                <a href="https://republicaguesthouse.pt/" target="_blank">Réserver hébergement (República Guest House)</a>
+            </div>
+        </div>
 
-/* ===== Reveal on scroll ===== */
-const io = new IntersectionObserver((entries) => {
-  entries.forEach(e => {
-    if (e.isIntersecting) {
-      e.target.classList.add('in');
-      io.unobserve(e.target);
-    }
-  });
-}, { threshold: 0.15 });
-document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+        <div id="jour9" class="section">
+            <h2>Jour&nbsp;9 – Vallée du Douro &amp; Pinhão</h2>
+            <p>Remontez la vallée du Douro jusqu’à Pinhão. Le paysage viticole en terrasses est façonné depuis deux millénaires et reconnu par l’UNESCO【425856339570486†L349-L374】. Profitez d’une croisière sur le Douro et visitez une quinta pour déguster un Porto. Prévoyez une réservation pour certaines caves【542590760980081†L260-L279】.</p>
+            <div class="buttons">
+                <a href="http://www.casadecasaldeloivos.com/" target="_blank">Réserver hébergement (Casa de Casal de Loivos)</a>
+                <a href="https://www.getyourguide.com/douro-valley-l1640/?partner_id=Q9OMX9D" target="_blank">Réserver activité (croisière Douro)</a>
+            </div>
+        </div>
 
-/* ===== Animated counter for stats ===== */
-const statObserver = new IntersectionObserver(entries => {
-  entries.forEach(e => {
-    if (e.isIntersecting) {
-      const el = e.target;
-      const finalText = el.textContent;
-      const num = parseInt(el.dataset.num);
-      if (isNaN(num)) return;
-      let cur = 0;
-      const step = Math.max(1, Math.ceil(num / 60));
-      const tick = () => {
-        cur = Math.min(cur + step, num);
-        if (finalText.includes('€')) el.textContent = cur + '€';
-        else el.textContent = cur;
-        if (cur < num) requestAnimationFrame(tick);
-      };
-      tick();
-      statObserver.unobserve(el);
-    }
-  });
-}, { threshold: 0.5 });
-document.querySelectorAll('.stat-num').forEach(el => statObserver.observe(el));
-</script>
+        <div id="jour10" class="section">
+            <h2>Jour&nbsp;10 – Porto</h2>
+            <p>Découvrez Porto, notamment le quartier de la Ribeira au bord du Douro et le pont Dom‑Luís I, chef‑d’œuvre d’ingénierie achevé en 1886 par l’élève d’Eiffel Théophile Seyrig【254654749521292†L27-L49】. Traversez le pont jusqu’à Vila Nova de Gaia pour visiter les caves de Porto【254654749521292†L92-L100】, puis explorez la gare São Bento et la librairie Lello.</p>
+            <div class="buttons">
+                <a href="http://guesthousedouro.com/" target="_blank">Réserver hébergement (Guest House Douro)</a>
+                <a href="https://www.inpatio.pt/" target="_blank">Réserver hébergement (InPatio Guest House)</a>
+            </div>
+        </div>
 
+        <div id="jour11" class="section">
+            <h2>Jour&nbsp;11 – Batalha</h2>
+            <p>Sur la route du retour vers le sud, arrêtez‑vous au monastère de Batalha, construit pour commémorer la victoire portugaise de 1385. Ce chef‑d’œuvre gothique est un symbole du pouvoir royal et de l’architecture manuéline【457298772593296†L361-L376】【457298772593296†L464-L470】. Vous pouvez également visiter le sanctuaire de Fátima à proximité.</p>
+            <div class="buttons">
+                <a href="https://www.hotelcasadoouteiro.com/" target="_blank">Réserver hébergement (Casa do Outeiro)</a>
+            </div>
+        </div>
+
+        <div id="jour12" class="section">
+            <h2>Jour&nbsp;12 – Tavira &amp; Ria Formosa Est</h2>
+            <p>Rejoignez la côte orientale de l’Algarve et Tavira. La ville est considérée comme l’une des mieux préservées de l’Algarve et compte plus de vingt églises【383940799089791†L60-L76】. Visitez l’Igreja da Misericórdia et le château reconstruit par le roi Dinis【383940799089791†L172-L180】. Prenez un bateau vers l’île de Tavira ou de Cabanas pour profiter des plages de sable et observer les oiseaux dans la lagune de Ria Formosa【383940799089791†L79-L87】.</p>
+            <div class="buttons">
+                <a href="https://www.casabelezadosul.com/" target="_blank">Réserver hébergement (Casa Beleza do Sul)</a>
+                <a href="https://casamodesta.pt/" target="_blank">Réserver hébergement (Casa Modesta)</a>
+                <a href="https://formosamar.com/" target="_blank">Réserver activité (excursion en bateau)</a>
+            </div>
+        </div>
+
+        <div id="jour13" class="section">
+            <h2>Jour&nbsp;13 – Retour à Faro</h2>
+            <p>Temps libre pour une dernière baignade ou une visite au marché d’Olhão avant de retourner à Faro. Restituez la voiture à l’aéroport et terminez votre road‑trip en beauté.</p>
+            <div class="buttons">
+                <a href="https://www.casa-apollo.com/" target="_blank">Réserver hébergement (Casa Apollo – si retour la veille)</a>
+            </div>
+        </div>
+    </div>
+    <footer>
+        &copy;&nbsp;2026&nbsp;–&nbsp;Roadtrip Portugal. Ce site fournit un résumé de l&rsquo;itinéraire, des hébergements et des activités pour votre voyage. Les liens de réservation redirigent vers les sites officiels; vérifiez les disponibilités et les tarifs avant de réserver.
+    </footer>
 </body>
 </html>
