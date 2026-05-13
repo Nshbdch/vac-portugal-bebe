@@ -505,6 +505,23 @@
     font-weight: 700;
     font-size: 13px;
   }
+  .lodging-opt {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    opacity: 0.55;
+    transition: opacity 0.2s;
+  }
+  .lodging-opt.active {
+    opacity: 1;
+  }
+  .lodging-opt.active .num {
+    color: var(--terracotta);
+  }
+  .lodging-sep {
+    margin: 0 6px;
+    color: var(--line);
+  }
 
   /* ================================
      ITINERARY — new mobile-first design
@@ -594,6 +611,69 @@
     color: var(--ink);
     font-size: 13px;
     letter-spacing: -0.01em;
+  }
+
+  /* Lodging mode toggle (Comfort / Budget) */
+  .mode-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    max-width: 720px;
+    margin: 0 auto 28px;
+  }
+  .mode-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    color: var(--ink);
+    transition: all 0.25s ease;
+    text-align: left;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .mode-btn:hover { border-color: rgba(192, 73, 42, 0.4); }
+  .mode-btn.active {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--paper);
+    box-shadow: 0 10px 30px rgba(26, 22, 20, 0.18);
+  }
+  .mode-btn .mode-ico {
+    font-size: 22px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .mode-btn .mode-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+  .mode-btn .mode-name {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+  }
+  .mode-btn .mode-price {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    color: var(--mute);
+    line-height: 1;
+  }
+  .mode-btn.active .mode-price {
+    color: var(--gold);
+  }
+  @media (max-width: 480px) {
+    .mode-btn { padding: 12px 14px; gap: 10px; }
+    .mode-btn .mode-name { font-size: 14px; }
+    .mode-btn .mode-ico { font-size: 18px; }
   }
 
   /* Days swiper */
@@ -741,6 +821,32 @@
     align-items: center;
     gap: 4px;
   }
+  .day-card-price {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    padding: 7px 11px;
+    background: rgba(212, 160, 23, 0.12);
+    border: 1px solid rgba(212, 160, 23, 0.35);
+    border-radius: 999px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink);
+    align-self: flex-start;
+  }
+  .day-card-price.budget {
+    background: rgba(31, 111, 134, 0.1);
+    border-color: rgba(31, 111, 134, 0.35);
+  }
+  .day-card-price .dcp-ico { font-size: 13px; line-height: 1; }
+  .day-card-price .dcp-price {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--terracotta-deep);
+  }
+  .day-card-price.budget .dcp-price { color: var(--azulejo); }
 
   /* Desktop: convert swiper to grid */
   @media (min-width: 900px) {
@@ -1011,18 +1117,42 @@
     margin-top: 6px;
   }
   .booking-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px 12px;
     padding: 12px 14px;
     background: var(--paper);
     border: 1px solid var(--line);
-    border-radius: 8px;
-    flex-wrap: wrap;
+    border-radius: 10px;
+    position: relative;
+    transition: all 0.2s;
+  }
+  .booking-row.is-active {
+    border-color: var(--ink);
+    box-shadow: 0 6px 18px rgba(26, 22, 20, 0.08);
+  }
+  .booking-row.confort.is-active {
+    background: linear-gradient(to right, rgba(212, 160, 23, 0.04), var(--paper) 30%);
+  }
+  .booking-row.budget.is-active {
+    background: linear-gradient(to right, rgba(31, 111, 134, 0.05), var(--paper) 30%);
+  }
+  .booking-tag {
+    grid-column: 1 / -1;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--mute);
+    margin-bottom: -2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .booking-row.is-active .booking-tag {
+    color: var(--ink);
+    font-weight: 700;
   }
   .booking-info {
-    flex: 1 1 55%;
     min-width: 0;
   }
   .booking-name {
@@ -1052,6 +1182,7 @@
     color: var(--terracotta);
     white-space: nowrap;
   }
+  .booking-row.budget .booking-price { color: var(--azulejo); }
   .booking-btn {
     display: inline-flex;
     align-items: center;
@@ -1076,7 +1207,7 @@
     opacity: 0.8;
   }
   @media (max-width: 380px) {
-    .booking-row { flex-direction: column; align-items: stretch; }
+    .booking-row { grid-template-columns: 1fr; }
     .booking-cta { justify-content: space-between; }
   }
 
@@ -1495,6 +1626,24 @@
       <div class="seg-summary" id="segSummary"></div>
     </div>
 
+    <!-- Lodging mode toggle (Comfort / Budget) -->
+    <div class="mode-toggle reveal" role="tablist" aria-label="Type d'hébergement">
+      <button class="mode-btn active" role="tab" aria-selected="true" data-mode="confort">
+        <span class="mode-ico">🛏️</span>
+        <span class="mode-text">
+          <span class="mode-name">Confort</span>
+          <span class="mode-price" id="modePriceConfort">— €</span>
+        </span>
+      </button>
+      <button class="mode-btn" role="tab" aria-selected="false" data-mode="budget">
+        <span class="mode-ico">🎒</span>
+        <span class="mode-text">
+          <span class="mode-name">Petit budget</span>
+          <span class="mode-price" id="modePriceBudget">— €</span>
+        </span>
+      </button>
+    </div>
+
     <!-- Days swiper (horizontal scroll on mobile, grid on desktop) -->
     <div class="days-swiper reveal" id="daysSwiper" role="list" aria-label="Liste des jours"></div>
 
@@ -1676,6 +1825,9 @@ const itineraryData1 = [
     tip: "Vérifiez que la location inclut le 'Via Verde' pour le péage électronique de l'A22.",
     booking: [
       { label: "Dona Ana Garden (Lagos)", url: "https://www.booking.com/hotel/pt/dona-ana-garden.html?aid=2438770&checkin=2026-06-20&checkout=2026-06-22&no_rooms=1&group_adults=3&selected_currency=EUR", price: "126€/nuit", rating: "8.3/10 · 2 380 avis" }
+    ],
+    bookingBudget: [
+      { label: "White Sun Hostel (Lagos)", url: "https://www.tripadvisor.fr/Hotel_Review-g189117-d7085478-Reviews-White_Sun_Hostel-Lagos_Faro_District_Algarve.html?staydates=2026_06_20_2026_06_22&uguests=1_3&m=70063", price: "80€/nuit", rating: "4,3/5 · 26 avis · Auberge" }
     ]
   },
   {
@@ -1693,6 +1845,9 @@ const itineraryData1 = [
     tip: "Pique-niquez le midi : tomates, pão alentejano, queijo, et un melon. Économique et délicieux.",
     booking: [
       { label: "Dona Ana Garden (Lagos)", url: "https://www.booking.com/hotel/pt/dona-ana-garden.html?aid=2438770&checkin=2026-06-20&checkout=2026-06-22&no_rooms=1&group_adults=3&selected_currency=EUR", price: "126€/nuit", rating: "8.3/10 · 2 380 avis" }
+    ],
+    bookingBudget: [
+      { label: "White Sun Hostel (Lagos)", url: "https://www.tripadvisor.fr/Hotel_Review-g189117-d7085478-Reviews-White_Sun_Hostel-Lagos_Faro_District_Algarve.html?staydates=2026_06_20_2026_06_22&uguests=1_3&m=70063", price: "80€/nuit", rating: "4,3/5 · 26 avis · Auberge" }
     ]
   },
   {
@@ -1710,6 +1865,9 @@ const itineraryData1 = [
     tip: "L'eau de l'Atlantique tourne autour de 17°C, même en juin. Combinaison conseillée si vous voulez nager longtemps.",
     booking: [
       { label: "Alojamentos Vitinho (Milfontes)", url: "https://www.booking.com/hotel/pt/alojamentos-vitinho.html?aid=2438770&checkin=2026-06-22&checkout=2026-06-23&no_rooms=1&group_adults=3&selected_currency=EUR", price: "65€", rating: "9.1/10 · 1 502 avis" }
+    ],
+    bookingBudget: [
+      { label: "I Ka Hale (Milfontes)", url: "https://www.tripadvisor.fr/Hotel_Review-g784072-d15603816-Reviews-I_Ka_Hale-Vila_Nova_de_Milfontes_Beja_District_Alentejo.html?staydates=2026_06_22_2026_06_23&uguests=1_3&m=70063", price: "90€", rating: "Budget · Meilleur prix trouvé" }
     ]
   },
   {
@@ -1727,6 +1885,9 @@ const itineraryData1 = [
     tip: "Garez la voiture dans un parking en périphérie (10-15€/jour) et déplacez-vous en tram/à pied.",
     booking: [
       { label: "Paradouro (Lisbonne)", url: "https://www.booking.com/hotel/pt/residencial-o-paradouro.html?aid=2438770&checkin=2026-06-23&checkout=2026-06-27&no_rooms=1&group_adults=3&selected_currency=EUR", price: "107€/nuit", rating: "8.6/10 · 3 655 avis" }
+    ],
+    bookingBudget: [
+      { label: "White House Lisbon Hostel", url: "https://www.tripadvisor.fr/Hotel_Review-g189158-d33138322-Reviews-White_House_Lisbon_Hostel-Lisbon_Lisbon_District_Central_Portugal.html?staydates=2026_06_23_2026_06_27&uguests=1_3&m=70063", price: "62€/nuit", rating: "~4,4/5 · Auberge" }
     ]
   },
   {
@@ -1744,6 +1905,9 @@ const itineraryData1 = [
     tip: "Achetez le pass Navegante 24h pour utiliser trams et bus en illimité.",
     booking: [
       { label: "Paradouro (Lisbonne)", url: "https://www.booking.com/hotel/pt/residencial-o-paradouro.html?aid=2438770&checkin=2026-06-23&checkout=2026-06-27&no_rooms=1&group_adults=3&selected_currency=EUR", price: "107€/nuit", rating: "8.6/10 · 3 655 avis" }
+    ],
+    bookingBudget: [
+      { label: "White House Lisbon Hostel", url: "https://www.tripadvisor.fr/Hotel_Review-g189158-d33138322-Reviews-White_House_Lisbon_Hostel-Lisbon_Lisbon_District_Central_Portugal.html?staydates=2026_06_23_2026_06_27&uguests=1_3&m=70063", price: "62€/nuit", rating: "~4,4/5 · Auberge" }
     ]
   },
   {
@@ -1761,6 +1925,9 @@ const itineraryData1 = [
     tip: "Arrivez à la pâtisserie de Belém avant 9h30 : la queue peut s'étirer sur 30 minutes en pleine saison.",
     booking: [
       { label: "Paradouro (Lisbonne)", url: "https://www.booking.com/hotel/pt/residencial-o-paradouro.html?aid=2438770&checkin=2026-06-23&checkout=2026-06-27&no_rooms=1&group_adults=3&selected_currency=EUR", price: "107€/nuit", rating: "8.6/10 · 3 655 avis" }
+    ],
+    bookingBudget: [
+      { label: "White House Lisbon Hostel", url: "https://www.tripadvisor.fr/Hotel_Review-g189158-d33138322-Reviews-White_House_Lisbon_Hostel-Lisbon_Lisbon_District_Central_Portugal.html?staydates=2026_06_23_2026_06_27&uguests=1_3&m=70063", price: "62€/nuit", rating: "~4,4/5 · Auberge" }
     ]
   },
   {
@@ -1778,6 +1945,9 @@ const itineraryData1 = [
     tip: "Réservez Pena longtemps à l'avance, créneau strict. Bus 434 depuis la gare jusqu'au palais.",
     booking: [
       { label: "Paradouro (Lisbonne)", url: "https://www.booking.com/hotel/pt/residencial-o-paradouro.html?aid=2438770&checkin=2026-06-23&checkout=2026-06-27&no_rooms=1&group_adults=3&selected_currency=EUR", price: "107€/nuit", rating: "8.6/10 · 3 655 avis" }
+    ],
+    bookingBudget: [
+      { label: "White House Lisbon Hostel", url: "https://www.tripadvisor.fr/Hotel_Review-g189158-d33138322-Reviews-White_House_Lisbon_Hostel-Lisbon_Lisbon_District_Central_Portugal.html?staydates=2026_06_23_2026_06_27&uguests=1_3&m=70063", price: "62€/nuit", rating: "~4,4/5 · Auberge" }
     ]
   },
   {
@@ -1795,6 +1965,9 @@ const itineraryData1 = [
     tip: "Prenez le funiculaire historique pour relier Praia (la plage) au Sítio (le quartier en hauteur).",
     booking: [
       { label: "Vila Farol (Nazaré)", url: "https://www.booking.com/hotel/pt/vila-farol.html?aid=2438770&checkin=2026-06-27&checkout=2026-06-28&no_rooms=1&group_adults=3&selected_currency=EUR", price: "135€", rating: "9.4/10 · 945 avis" }
+    ],
+    bookingBudget: [
+      { label: "Nazaré Hostel - Rooms & Dorms", url: "https://www.tripadvisor.fr/Hotel_Review-g315902-d6898223-Reviews-Nazare_Hostel_Rooms_Dorms-Nazare_Leiria_District_Central_Portugal.html?staydates=2026_06_27_2026_06_28&uguests=1_3&m=70063", price: "128€", rating: "4,3/5 · Auberge" }
     ]
   },
   {
@@ -1812,6 +1985,9 @@ const itineraryData1 = [
     tip: "La Joanina se visite sur créneau horaire strict. Soyez ponctuels, ils ne laissent pas entrer en retard.",
     booking: [
       { label: "NJOY Coimbra", url: "https://www.booking.com/hotel/pt/njoy-coimbra.html?aid=2438770&checkin=2026-06-28&checkout=2026-06-29&no_rooms=1&group_adults=3&selected_currency=EUR", price: "87€", rating: "9.0/10 · 1 140 avis" }
+    ],
+    bookingBudget: [
+      { label: "Serenata Hotel & Hostel (Coimbra)", url: "https://www.tripadvisor.fr/Hotel_Review-g189143-d3366364-Reviews-Serenata_Hotel_Hostel_Coimbra-Coimbra_Coimbra_District_Central_Portugal.html?staydates=2026_06_28_2026_06_29&uguests=1_3&m=70063", price: "93€", rating: "Beaucoup d’avis · Auberge centrale" }
     ]
   },
   {
@@ -1829,6 +2005,9 @@ const itineraryData1 = [
     tip: "La Francesinha est très copieuse. Une pour deux, et une salade pour la conscience.",
     booking: [
       { label: "Castelo Santa Catarina (Porto)", url: "https://www.booking.com/hotel/pt/castelo-santa-catarina.html?aid=2438770&checkin=2026-06-29&checkout=2026-07-01&no_rooms=1&group_adults=3&selected_currency=EUR", price: "137,91€/nuit", rating: "9.2/10 · 2 321 avis" }
+    ],
+    bookingBudget: [
+      { label: "Rivoli Cinema Hostel (Porto)", url: "https://www.tripadvisor.fr/Hotel_Review-g189180-d1203404-Reviews-Rivoli_Cinema_Hostel-Porto_Porto_District_Northern_Portugal.html?staydates=2026_06_29_2026_07_01&uguests=1_3&m=70063", price: "111€/nuit", rating: "4,5/5 · Auberge" }
     ]
   },
   {
@@ -1846,6 +2025,9 @@ const itineraryData1 = [
     tip: "Pour la Librairie Lello (oui, celle qui aurait inspiré Harry Potter) achetez le billet en ligne — la queue est dissuasive.",
     booking: [
       { label: "Castelo Santa Catarina (Porto)", url: "https://www.booking.com/hotel/pt/castelo-santa-catarina.html?aid=2438770&checkin=2026-06-29&checkout=2026-07-01&no_rooms=1&group_adults=3&selected_currency=EUR", price: "137,91€/nuit", rating: "9.2/10 · 2 321 avis" }
+    ],
+    bookingBudget: [
+      { label: "Rivoli Cinema Hostel (Porto)", url: "https://www.tripadvisor.fr/Hotel_Review-g189180-d1203404-Reviews-Rivoli_Cinema_Hostel-Porto_Porto_District_Northern_Portugal.html?staydates=2026_06_29_2026_07_01&uguests=1_3&m=70063", price: "111€/nuit", rating: "4,5/5 · Auberge" }
     ]
   },
   {
@@ -1864,6 +2046,9 @@ const itineraryData1 = [
     tip: "Longue route — alternez les conducteurs, prévoyez pause déjeuner à Coimbra ou Fátima (~à mi-chemin). Faites le plein la veille du retour pour éviter le rush du matin.",
     booking: [
       { label: "Senhor Gigi (Faro)", url: "https://www.booking.com/hotel/pt/senhor-gigi.html?aid=2438770&checkin=2026-07-01&checkout=2026-07-02&no_rooms=1&group_adults=3&selected_currency=EUR", price: "190,80€", rating: "9.3/10 · 1 118 avis" }
+    ],
+    bookingBudget: [
+      { label: "Baixa Terrace Hostel (Faro)", url: "https://www.tripadvisor.fr/Hotel_Review-g189116-d4573644-Reviews-Baixa_Terrace_Hostel-Faro_Faro_District_Algarve.html?staydates=2026_07_01_2026_07_02&uguests=1_3&m=70063", price: "149€", rating: "Auberge · option la + rationnelle" }
     ]
   },
   {
@@ -1899,6 +2084,9 @@ const itineraryData2 = [
     tip: "Réservez l'excursion en bateau le matin pour assurer une place l'après-midi en haute saison.",
     booking: [
       { label: "Lemon Tree Stay (Faro)", url: "https://www.booking.com/hotel/pt/lemon-tree-stay.html?aid=2438770&checkin=2026-06-20&checkout=2026-06-21&no_rooms=1&group_adults=3&selected_currency=EUR", price: "189,33€", rating: "8.9/10 · 1 354 avis" }
+    ],
+    bookingBudget: [
+      { label: "Baixa Terrace Hostel (Faro)", url: "https://www.tripadvisor.fr/Hotel_Review-g189116-d4573644-Reviews-Baixa_Terrace_Hostel-Faro_Faro_District_Algarve.html?staydates=2026_06_20_2026_06_21&uguests=1_3&m=70063", price: "107€", rating: "Option hostel · Auberge" }
     ]
   },
   {
@@ -1917,6 +2105,9 @@ const itineraryData2 = [
     tip: "Une passerelle en bois mène à des points de vue spectaculaires — y aller en fin d'après-midi pour la lumière dorée.",
     booking: [
       { label: "Nature Guesthouse (Lagos)", url: "https://www.booking.com/hotel/pt/nature-guesthouse.html?aid=2438770&checkin=2026-06-21&checkout=2026-06-22&no_rooms=1&group_adults=3&selected_currency=EUR", price: "153,90€", rating: "8.5/10 · 1 204 avis" }
+    ],
+    bookingBudget: [
+      { label: "Boutique Taghostel (Lagos)", url: "https://www.tripadvisor.fr/Hotel_Review-g189117-d10198958-Reviews-Boutique_Taghostel-Lagos_Faro_District_Algarve.html?staydates=2026_06_21_2026_06_22&uguests=1_3&m=70063", price: "158€", rating: "Hostel bien placé" }
     ]
   },
   {
@@ -1934,6 +2125,9 @@ const itineraryData2 = [
     tip: "Le Fóia offre une vue à 360° par temps clair — visible depuis l'océan jusqu'à l'Alentejo.",
     booking: [
       { label: "Lavradores Boutique Guesthouse (Évora)", url: "https://www.booking.com/hotel/pt/lavradores-boutique-guesthouse.html?aid=2438770&checkin=2026-06-22&checkout=2026-06-24&no_rooms=1&group_adults=3&selected_currency=EUR", price: "103,50€/nuit", rating: "9.1/10 · 1 322 avis" }
+    ],
+    bookingBudget: [
+      { label: "Avis Guest House (Évora)", url: "https://www.tripadvisor.fr/Hotel_Review-g189106-d12291082-Reviews-Avis_Guest_House-Evora_Evora_District_Alentejo.html?staydates=2026_06_22_2026_06_24&uguests=1_3&m=70063", price: "86€/nuit", rating: "Budget · Guesthouse" }
     ]
   },
   {
@@ -1951,6 +2145,9 @@ const itineraryData2 = [
     tip: "Goûtez les vins de l'Alentejo, l'une des régions viticoles les plus dynamiques du Portugal.",
     booking: [
       { label: "Lavradores Boutique Guesthouse (Évora)", url: "https://www.booking.com/hotel/pt/lavradores-boutique-guesthouse.html?aid=2438770&checkin=2026-06-22&checkout=2026-06-24&no_rooms=1&group_adults=3&selected_currency=EUR", price: "103,50€/nuit", rating: "9.1/10 · 1 322 avis" }
+    ],
+    bookingBudget: [
+      { label: "Avis Guest House (Évora)", url: "https://www.tripadvisor.fr/Hotel_Review-g189106-d12291082-Reviews-Avis_Guest_House-Evora_Evora_District_Alentejo.html?staydates=2026_06_22_2026_06_24&uguests=1_3&m=70063", price: "86€/nuit", rating: "Budget · Guesthouse" }
     ]
   },
   {
@@ -1969,6 +2166,9 @@ const itineraryData2 = [
     tip: "Réservez les billets pour le Palais de Pena dès aujourd'hui pour demain — créneaux horaires stricts.",
     booking: [
       { label: "Vila Garden Guesthouse (Lisbonne)", url: "https://www.booking.com/hotel/pt/vila-garden-guest-house.html?aid=2438770&checkin=2026-06-24&checkout=2026-06-25&no_rooms=1&group_adults=3&selected_currency=EUR", price: "165€", rating: "9.1/10 · 1 933 avis" }
+    ],
+    bookingBudget: [
+      { label: "White House Lisbon Hostel", url: "https://www.tripadvisor.fr/Hotel_Review-g189158-d33138322-Reviews-White_House_Lisbon_Hostel-Lisbon_Lisbon_District_Central_Portugal.html?staydates=2026_06_24_2026_06_25&uguests=1_3&m=70063", price: "61€", rating: "4,4/5 · Auberge" }
     ]
   },
   {
@@ -1986,6 +2186,9 @@ const itineraryData2 = [
     tip: "Le puits de Regaleira se descend en spirale — claustrophobes s'abstenir, mais magique pour tous les autres.",
     booking: [
       { label: "HappySintra GuestHouse", url: "https://www.booking.com/hotel/pt/happysintra-guesthouse-by-casa-do-preto.html?aid=2438770&checkin=2026-06-25&checkout=2026-06-26&no_rooms=1&group_adults=3&selected_currency=EUR", price: "126€", rating: "9.1/10 · 1 300 avis" }
+    ],
+    bookingBudget: [
+      { label: "Joivy Moon Hill Hostel (Sintra)", url: "https://www.tripadvisor.fr/Hotel_Review-g189164-d6474394-Reviews-Joivy_Moon_Hill_Hostel-Sintra_Sintra_Municipality_Lisbon_District_Central_Portugal.html?staydates=2026_06_25_2026_06_26&uguests=1_3&m=70063", price: "80€", rating: "4,6/5 · Auberge" }
     ]
   },
   {
@@ -2003,6 +2206,9 @@ const itineraryData2 = [
     tip: "Goûtez la Ginjinha d'Óbidos servie dans un verre en chocolat — tradition locale délicieuse.",
     booking: [
       { label: "Vila Farol (Nazaré)", url: "https://www.booking.com/hotel/pt/vila-farol.html?aid=2438770&checkin=2026-06-26&checkout=2026-06-27&no_rooms=1&group_adults=3&selected_currency=EUR", price: "145€", rating: "9.4/10 · 944 avis" }
+    ],
+    bookingBudget: [
+      { label: "Nazaré Hostel - Rooms & Dorms", url: "https://www.tripadvisor.fr/Hotel_Review-g315902-d6898223-Reviews-Nazare_Hostel_Rooms_Dorms-Nazare_Leiria_District_Central_Portugal.html?staydates=2026_06_26_2026_06_27&uguests=1_3&m=70063", price: "78€", rating: "4,3/5 · Auberge" }
     ]
   },
   {
@@ -2020,6 +2226,9 @@ const itineraryData2 = [
     tip: "La Joanina abrite des chauves-souris qui mangent les insectes nuisibles aux livres — visite hautement supervisée.",
     booking: [
       { label: "República Guest House (Coimbra)", url: "https://www.booking.com/hotel/pt/republica-guest-house-coimbra.html?aid=2438770&checkin=2026-06-27&checkout=2026-06-28&no_rooms=1&group_adults=3&selected_currency=EUR", price: "150€", rating: "9.8/10 · 668 avis" }
+    ],
+    bookingBudget: [
+      { label: "Serenata Hotel & Hostel (Coimbra)", url: "https://www.tripadvisor.fr/Hotel_Review-g189143-d3366364-Reviews-Serenata_Hotel_Hostel_Coimbra-Coimbra_Coimbra_District_Central_Portugal.html?staydates=2026_06_27_2026_06_28&uguests=1_3&m=70063", price: "93€", rating: "Fiable · Auberge" }
     ]
   },
   {
@@ -2037,6 +2246,9 @@ const itineraryData2 = [
     tip: "Réservez les caves à l'avance — beaucoup ne reçoivent que sur rendez-vous, surtout les plus prestigieuses.",
     booking: [
       { label: "Casa das Laranjeiras (Pinhão)", url: "https://www.booking.com/hotel/pt/casa-das-laranjeiras-pinhao.html?aid=2438770&checkin=2026-06-28&checkout=2026-06-29&no_rooms=1&group_adults=3&selected_currency=EUR", price: "185€", rating: "9.5/10 · 120 avis" }
+    ],
+    bookingBudget: [
+      { label: "Casas Botelho Elias (Pinhão)", url: "https://www.tripadvisor.fr/Hotel_Review-g580264-d16698978-Reviews-Casas_Botelho_Elias-Pinhao_Vila_Real_District_Northern_Portugal.html?staydates=2026_06_28_2026_06_29&uguests=1_3&m=70063", price: "126€", rating: "4,2/5 · Guesthouse" }
     ]
   },
   {
@@ -2055,6 +2267,9 @@ const itineraryData2 = [
     tip: "Achetez le billet pour la librairie Lello en ligne — la queue physique peut dépasser une heure en été.",
     booking: [
       { label: "Castelo Santa Catarina (Porto)", url: "https://www.booking.com/hotel/pt/castelo-santa-catarina.html?aid=2438770&checkin=2026-06-29&checkout=2026-06-30&no_rooms=1&group_adults=3&selected_currency=EUR", price: "138,29€", rating: "9.2/10 · 2 321 avis" }
+    ],
+    bookingBudget: [
+      { label: "Rivoli Cinema Hostel (Porto)", url: "https://www.tripadvisor.fr/Hotel_Review-g189180-d1203404-Reviews-Rivoli_Cinema_Hostel-Porto_Porto_District_Northern_Portugal.html?staydates=2026_06_29_2026_06_30&uguests=1_3&m=70063", price: "129€", rating: "4,5/5 · Auberge" }
     ]
   },
   {
@@ -2072,6 +2287,9 @@ const itineraryData2 = [
     tip: "La Chapelle Inachevée de Batalha est un mystère architectural — laissée volontairement ouverte au ciel.",
     booking: [
       { label: "Casa da Lena (Batalha)", url: "https://www.booking.com/hotel/pt/casa-da-lena-batalha.html?aid=2438770&checkin=2026-06-30&checkout=2026-07-01&no_rooms=1&group_adults=3&selected_currency=EUR", price: "90€", rating: "8.8/10 · 217 avis" }
+    ],
+    bookingBudget: [
+      { label: "Casa da Lena (Batalha)", url: "https://www.tripadvisor.fr/Hotel_Review-g189152-d14800366-Reviews-Casa_da_Lena-Batalha_Leiria_District_Central_Portugal.html?staydates=2026_06_30_2026_07_01&uguests=1_3&m=70063", price: "90€", rating: "Très bon prix · Guesthouse" }
     ]
   },
   {
@@ -2089,6 +2307,9 @@ const itineraryData2 = [
     tip: "Tavira est plus paisible que l'Algarve de l'ouest — parfait pour ralentir avant le retour.",
     booking: [
       { label: "Porta Nova Guesthouse (Tavira)", url: "https://www.booking.com/hotel/pt/casa-da-porta-nova-by-tavira-nature-guesthouse.html?aid=2438770&checkin=2026-07-01&checkout=2026-07-02&no_rooms=1&group_adults=3&selected_currency=EUR", price: "150€", rating: "8.6/10 · 718 avis" }
+    ],
+    bookingBudget: [
+      { label: "Residencial Princesa do Gilão (Tavira)", url: "https://www.tripadvisor.fr/Hotel_Review-g285715-d4154932-Reviews-Residencial_Princesa_do_Gilao-Tavira_Faro_District_Algarve.html?staydates=2026_07_01_2026_07_02&uguests=1_3&m=70063", price: "129€", rating: "Budget · Fallback" }
     ]
   },
   {
@@ -2127,6 +2348,9 @@ const itineraryData3 = [
     tip: "Garez la voiture dès l'arrivée à l'hôtel et faites tout à pied — la vieille ville se traverse en 15 minutes.",
     booking: [
       { label: "Happen!ng 2 (Faro)", url: "https://happenng-2.hotelsalgarve.net/en/", price: "≈83€/nuit", rating: "B&B triple avec balcon" }
+    ],
+    bookingBudget: [
+      { label: "Baixa Terrace Hostel (Faro)", url: "https://www.tripadvisor.fr/Hotel_Review-g189116-d4573644-Reviews-Baixa_Terrace_Hostel-Faro_Faro_District_Algarve.html?staydates=2026_06_20_2026_06_22&uguests=1_3&m=70063", price: "106€/nuit", rating: "Auberge · 2 nuits 213€" }
     ]
   },
   {
@@ -2144,6 +2368,9 @@ const itineraryData3 = [
     tip: "Réservez l'excursion en bateau le matin pour assurer une place — les départs en haute saison sont vite complets.",
     booking: [
       { label: "Happen!ng 2 (Faro)", url: "https://happenng-2.hotelsalgarve.net/en/", price: "≈83€/nuit", rating: "B&B triple avec balcon" }
+    ],
+    bookingBudget: [
+      { label: "Baixa Terrace Hostel (Faro)", url: "https://www.tripadvisor.fr/Hotel_Review-g189116-d4573644-Reviews-Baixa_Terrace_Hostel-Faro_Faro_District_Algarve.html?staydates=2026_06_20_2026_06_22&uguests=1_3&m=70063", price: "106€/nuit", rating: "Auberge · 2 nuits 213€" }
     ]
   },
   {
@@ -2161,6 +2388,9 @@ const itineraryData3 = [
     tip: "Vérifiez que la voiture de location inclut le 'Via Verde' pour le péage électronique de l'A22.",
     booking: [
       { label: "Lagos Village", url: "https://www.booking.com/hotel/pt/lagos-village.html", price: "≈140€/nuit", rating: "Triple Comfort · piscine" }
+    ],
+    bookingBudget: [
+      { label: "White Sun Hostel (Lagos)", url: "https://www.tripadvisor.fr/Hotel_Review-g189117-d7085478-Reviews-White_Sun_Hostel-Lagos_Faro_District_Algarve.html?staydates=2026_06_22_2026_06_24&uguests=1_3&m=70063", price: "80€/nuit", rating: "4,3/5 · 26 avis · Auberge" }
     ]
   },
   {
@@ -2178,6 +2408,9 @@ const itineraryData3 = [
     tip: "Praia da Marinha est plus paisible le matin tôt — l'après-midi, la lumière est dure et les tour-opérateurs débarquent.",
     booking: [
       { label: "Lagos Village", url: "https://www.booking.com/hotel/pt/lagos-village.html", price: "≈140€/nuit", rating: "Triple Comfort · piscine" }
+    ],
+    bookingBudget: [
+      { label: "White Sun Hostel (Lagos)", url: "https://www.tripadvisor.fr/Hotel_Review-g189117-d7085478-Reviews-White_Sun_Hostel-Lagos_Faro_District_Algarve.html?staydates=2026_06_22_2026_06_24&uguests=1_3&m=70063", price: "80€/nuit", rating: "4,3/5 · 26 avis · Auberge" }
     ]
   },
   {
@@ -2196,6 +2429,9 @@ const itineraryData3 = [
     tip: "Partez tôt de Lagos (au plus tard 9h) pour arriver en milieu d'après-midi et profiter d'une session de fin de journée.",
     booking: [
       { label: "Boa Onda Guesthouse (Peniche)", url: "https://boaondaguesthousepeniche.com", price: "≈120€/nuit", rating: "Surf · yoga · petit-déj inclus" }
+    ],
+    bookingBudget: [
+      { label: "Tribo da Praia Eco Hostel (Peniche)", url: "https://www.tripadvisor.fr/Hotel_Review-g608952-d6945410-Reviews-Tribo_da_Praia_Eco_Hostel-Peniche_Leiria_District_Central_Portugal.html?staydates=2026_06_24_2026_06_25&uguests=1_3&m=70063", price: "59€", rating: "4,5/5 · Surf hostel" }
     ]
   },
   {
@@ -2215,6 +2451,9 @@ const itineraryData3 = [
     booking: [
       { label: "Amar Hostel & Suites (Ericeira)", url: "https://www.booking.com/hotel/pt/casa-do-sol.html", price: "≈90-130€/nuit", rating: "Auberge triple · vue mer" },
       { label: "Vila Galé Ericeira", url: "https://www.vilagale.com", price: "≈155€/nuit", rating: "Hôtel bord de mer · piscines" }
+    ],
+    bookingBudget: [
+      { label: "WOT Ericeira Lodge", url: "https://www.tripadvisor.fr/Hotel_Review-g652084-d23531494-Reviews-WOT_Ericeira_Lodge-Ericeira_Mafra_Lisbon_District_Central_Portugal.html?staydates=2026_06_25_2026_06_26&uguests=1_3&m=70063", price: "117€", rating: "Lodge budget" }
     ]
   },
   {
@@ -2232,6 +2471,9 @@ const itineraryData3 = [
     tip: "Faites le plein avant d'entrer dans le Douro — les stations-service sont rares dans la vallée.",
     booking: [
       { label: "Casa Dona Eufémia (Pinhão)", url: "https://www.booking.com/hotel/pt/casa-dona-eufemia.html", price: "≈105€/nuit", rating: "Maison d'hôtes · vignes · piscine" }
+    ],
+    bookingBudget: [
+      { label: "Casas Botelho Elias (Pinhão)", url: "https://www.tripadvisor.fr/Hotel_Review-g580264-d16698978-Reviews-Casas_Botelho_Elias-Pinhao_Vila_Real_District_Northern_Portugal.html?staydates=2026_06_26_2026_06_28&uguests=1_3&m=70063", price: "126€/nuit", rating: "4,2/5 · Guesthouse" }
     ]
   },
   {
@@ -2250,6 +2492,9 @@ const itineraryData3 = [
     tip: "Réservez les caves à l'avance : beaucoup ne reçoivent que sur rendez-vous, surtout les plus prestigieuses.",
     booking: [
       { label: "Casa Dona Eufémia (Pinhão)", url: "https://www.booking.com/hotel/pt/casa-dona-eufemia.html", price: "≈105€/nuit", rating: "Maison d'hôtes · vignes · piscine" }
+    ],
+    bookingBudget: [
+      { label: "Casas Botelho Elias (Pinhão)", url: "https://www.tripadvisor.fr/Hotel_Review-g580264-d16698978-Reviews-Casas_Botelho_Elias-Pinhao_Vila_Real_District_Northern_Portugal.html?staydates=2026_06_26_2026_06_28&uguests=1_3&m=70063", price: "126€/nuit", rating: "4,2/5 · Guesthouse" }
     ]
   },
   {
@@ -2269,6 +2514,9 @@ const itineraryData3 = [
     tip: "Garez la voiture pour les 2 nuits dans un parking couvert (10-15€/jour) — Porto se découvre à pied.",
     booking: [
       { label: "Regras Apartments & Garden (Porto)", url: "https://www.booking.com/hotel/pt/regras-apartments-garden.html", price: "≈93€/nuit", rating: "Appart 2 chambres · cuisine" }
+    ],
+    bookingBudget: [
+      { label: "Being Porto Hostel", url: "https://www.tripadvisor.fr/Hotel_Review-g189180-d8439821-Reviews-Being_Porto_Hostel-Porto_Porto_District_Northern_Portugal.html?staydates=2026_06_28_2026_06_30&uguests=1_3&m=70063", price: "146€/nuit", rating: "4,5/5 · Auberge" }
     ]
   },
   {
@@ -2287,6 +2535,9 @@ const itineraryData3 = [
     tip: "La Librairie Lello impose un billet d'entrée déductible à l'achat d'un livre — vendu en ligne uniquement.",
     booking: [
       { label: "Regras Apartments & Garden (Porto)", url: "https://www.booking.com/hotel/pt/regras-apartments-garden.html", price: "≈93€/nuit", rating: "Appart 2 chambres · cuisine" }
+    ],
+    bookingBudget: [
+      { label: "Being Porto Hostel", url: "https://www.tripadvisor.fr/Hotel_Review-g189180-d8439821-Reviews-Being_Porto_Hostel-Porto_Porto_District_Northern_Portugal.html?staydates=2026_06_28_2026_06_30&uguests=1_3&m=70063", price: "146€/nuit", rating: "4,5/5 · Auberge" }
     ]
   },
   {
@@ -2305,6 +2556,9 @@ const itineraryData3 = [
     tip: "La Capela dos Ossos ferme à 17h45 (entrée jusqu'à 17h15) — visez l'arrivée à Évora avant 16h.",
     booking: [
       { label: "Hotel Solar de Monfalim (Évora)", url: "https://www.booking.com/hotel/pt/residencial-solar-de-monfalim.html", price: "≈93€/nuit", rating: "Historique · centre UNESCO" }
+    ],
+    bookingBudget: [
+      { label: "Avis Guest House (Évora)", url: "https://www.tripadvisor.fr/Hotel_Review-g189106-d12291082-Reviews-Avis_Guest_House-Evora_Evora_District_Alentejo.html?staydates=2026_06_30_2026_07_01&uguests=1_3&m=70063", price: "86€", rating: "Budget · Guesthouse" }
     ]
   },
   {
@@ -2323,6 +2577,9 @@ const itineraryData3 = [
     tip: "Faites le plein avant de rendre la voiture le lendemain — sinon la location vous facture un forfait carburant majoré.",
     booking: [
       { label: "Happen!ng 2 (Faro)", url: "https://happenng-2.hotelsalgarve.net/en/", price: "≈83€/nuit", rating: "B&B triple avec balcon" }
+    ],
+    bookingBudget: [
+      { label: "Baixa Terrace Hostel (Faro)", url: "https://www.tripadvisor.fr/Hotel_Review-g189116-d4573644-Reviews-Baixa_Terrace_Hostel-Faro_Faro_District_Algarve.html?staydates=2026_07_01_2026_07_02&uguests=1_3&m=70063", price: "149€", rating: "Auberge · option la + rationnelle" }
     ]
   },
   {
@@ -2386,6 +2643,14 @@ function renderDaysSwiper() {
     card.tabIndex = 0;
     card.dataset.idx = i;
     const svgThumb = makeSceneSVG(d.scene || 'cliffs', d.place);
+    const field = bookingField();
+    const activeBooking = (d[field] && d[field][0]) ? d[field][0] : null;
+    const priceBadge = activeBooking ? `
+      <div class="day-card-price ${currentMode}">
+        <span class="dcp-ico">${currentMode === 'budget' ? '🎒' : '🛏️'}</span>
+        <span class="dcp-price">${activeBooking.price}</span>
+      </div>
+    ` : '';
     card.innerHTML = `
       <div class="day-card-thumb">
         <div class="day-card-day">
@@ -2402,6 +2667,7 @@ function renderDaysSwiper() {
           <span class="item">🛣️ ${d.km} km</span>
           <span class="item">⏱ ${d.driveTime}</span>
         </div>
+        ${priceBadge}
         <div class="day-card-cta">Voir le détail →</div>
       </div>
     `;
@@ -2648,25 +2914,35 @@ function renderSheetContent(i) {
   if (!d) return;
   const sheetContent = document.getElementById("sheetContent");
   const svgHero = makeSceneSVG(d.scene || 'cliffs', d.place);
-  const bookingBlock = (d.booking && d.booking.length > 0)
-    ? `<div class="info-card booking">
-         <h5><span>🏨</span> Hébergement réservé</h5>
-         <div class="booking-links">
-           ${d.booking.map(b => `
-             <div class="booking-row">
-               <div class="booking-info">
-                 <div class="booking-name">${b.label}</div>
-                 ${b.rating ? `<div class="booking-rating">${b.rating}</div>` : ''}
-               </div>
-               <div class="booking-cta">
-                 ${b.price ? `<div class="booking-price">${b.price}</div>` : ''}
-                 <a href="${b.url}" target="_blank" rel="noopener" class="booking-btn">Réserver <span class="arr">↗</span></a>
-               </div>
-             </div>
-           `).join("")}
-         </div>
-       </div>`
-    : "";
+
+  const renderBookingCard = (b, type) => {
+    const isActive = (type === currentMode);
+    const typeLabel = type === 'budget' ? '🎒 Petit budget' : '🛏️ Confort';
+    return `
+      <div class="booking-row ${type} ${isActive ? 'is-active' : ''}">
+        <div class="booking-tag">${typeLabel}</div>
+        <div class="booking-info">
+          <div class="booking-name">${b.label}</div>
+          ${b.rating ? `<div class="booking-rating">${b.rating}</div>` : ''}
+        </div>
+        <div class="booking-cta">
+          ${b.price ? `<div class="booking-price">${b.price}</div>` : ''}
+          <a href="${b.url}" target="_blank" rel="noopener" class="booking-btn">Réserver <span class="arr">↗</span></a>
+        </div>
+      </div>
+    `;
+  };
+
+  const confortRows = (d.booking || []).map(b => renderBookingCard(b, 'confort')).join('');
+  const budgetRows = (d.bookingBudget || []).map(b => renderBookingCard(b, 'budget')).join('');
+  const bookingBlock = (confortRows || budgetRows) ? `
+    <div class="info-card booking">
+      <h5><span>🏨</span> Où dormir cette nuit</h5>
+      <div class="booking-links">
+        ${confortRows}
+        ${budgetRows}
+      </div>
+    </div>` : "";
 
   sheetContent.innerHTML = `
     <div class="sheet-hero">
@@ -2821,30 +3097,35 @@ function renderMap() {
 
 /* ===== Lodging totals (from real prices) ===== */
 function parsePrice(str) {
-  // "126€/nuit" → 126, "137,91€" → 137.91, "103,50€/nuit" → 103.50
   if (!str) return 0;
   const m = str.replace(',', '.').match(/([\d]+\.?\d*)/);
   return m ? parseFloat(m[1]) : 0;
 }
-function totalLodging(arr) {
+function totalLodging(arr, field) {
   return arr.reduce((sum, d) => {
-    if (d.booking && d.booking[0] && d.booking[0].price) {
-      return sum + parsePrice(d.booking[0].price);
+    const list = d[field];
+    if (list && list[0] && list[0].price) {
+      return sum + parsePrice(list[0].price);
     }
     return sum;
   }, 0);
 }
 const lodgingTotals = {
-  1: totalLodging(itineraryData1),
-  2: totalLodging(itineraryData2),
-  3: totalLodging(itineraryData3)
+  1: { confort: totalLodging(itineraryData1, 'booking'), budget: totalLodging(itineraryData1, 'bookingBudget') },
+  2: { confort: totalLodging(itineraryData2, 'booking'), budget: totalLodging(itineraryData2, 'bookingBudget') },
+  3: { confort: totalLodging(itineraryData3, 'booking'), budget: totalLodging(itineraryData3, 'bookingBudget') }
 };
+
+/* ===== Mode state (confort | budget) ===== */
+let currentMode = 'confort';
+function bookingField() { return currentMode === 'budget' ? 'bookingBudget' : 'booking'; }
+function lodgingFor(itin) { return lodgingTotals[itin][currentMode]; }
 
 /* ===== Budget chart (rebuildable) ===== */
 let budgetChartInstance = null;
 function renderBudgetChart() {
   if (budgetChartInstance) budgetChartInstance.destroy();
-  const lodging = Math.round(lodgingTotals[currentItin]);
+  const lodging = Math.round(lodgingFor(currentItin));
   const food = 1500;
   const transport = 750;
   const activities = 470;
@@ -2892,11 +3173,21 @@ function renderBudgetChart() {
   if (totalEl) {
     totalEl.innerHTML = `Total : <span class="num">${total.toLocaleString('fr-FR')}€</span> · ≈ ${Math.round(total/3).toLocaleString('fr-FR')}€/pers.`;
   }
-  // Lodging sub-line
+  // Lodging sub-line — show BOTH modes side by side
   const lodgingEl = document.getElementById('lodgingTotalLine');
   if (lodgingEl) {
-    const exactLodging = lodgingTotals[currentItin];
-    lodgingEl.innerHTML = `Dont logement : <span class="num">${exactLodging.toFixed(2).replace('.', ',')}€</span> · ${(exactLodging/3).toFixed(2).replace('.', ',')}€/pers.`;
+    const confortLodging = lodgingTotals[currentItin].confort;
+    const budgetLodging = lodgingTotals[currentItin].budget;
+    const isConfortActive = currentMode === 'confort';
+    lodgingEl.innerHTML = `
+      <span class="lodging-opt ${isConfortActive ? 'active' : ''}" data-mode="confort">
+        🛏️ Confort : <span class="num">${Math.round(confortLodging).toLocaleString('fr-FR')}€</span>
+      </span>
+      <span class="lodging-sep">·</span>
+      <span class="lodging-opt ${!isConfortActive ? 'active' : ''}" data-mode="budget">
+        🎒 Petit budget : <span class="num">${Math.round(budgetLodging).toLocaleString('fr-FR')}€</span>
+      </span>
+    `;
   }
 }
 
@@ -2966,7 +3257,7 @@ function renderDynamicStats() {
   // Update budget total in the stats strip
   const budgetStat = document.querySelector('.stat-num[data-stat="budget"]');
   if (budgetStat) {
-    const lodging = lodgingTotals[currentItin];
+    const lodging = lodgingFor(currentItin);
     const total = Math.round(lodging + 1500 + 750 + 470);
     budgetStat.dataset.num = total;
     budgetStat.textContent = total.toLocaleString('fr-FR') + '€';
@@ -3017,9 +3308,20 @@ function renderAll() {
   renderDynamicStats();
   renderMapLegend();
   renderSegSummary();
+  renderModeToggle();
   // Reset swiper to start
   const swiper = document.getElementById("daysSwiper");
   if (swiper) swiper.scrollLeft = 0;
+}
+
+/* ===== Mode toggle prices refresh ===== */
+function renderModeToggle() {
+  const c = lodgingTotals[currentItin].confort;
+  const b = lodgingTotals[currentItin].budget;
+  const cEl = document.getElementById('modePriceConfort');
+  const bEl = document.getElementById('modePriceBudget');
+  if (cEl) cEl.textContent = Math.round(c).toLocaleString('fr-FR') + '€ logement';
+  if (bEl) bEl.textContent = Math.round(b).toLocaleString('fr-FR') + '€ logement';
 }
 
 /* ===== Segment summary line (under switcher) ===== */
@@ -3027,14 +3329,15 @@ function renderSegSummary() {
   const el = document.getElementById('segSummary');
   if (!el) return;
   const totalKm = itineraryData.reduce((s, d) => s + d.km, 0);
-  const lodging = lodgingTotals[currentItin];
+  const c = lodgingTotals[currentItin].confort;
+  const b = lodgingTotals[currentItin].budget;
   const names = {
     1: 'Lagos · Lisbonne · Porto · Faro',
     2: 'Faro · Évora · Douro · Tavira',
     3: 'Faro · Lagos · Peniche · Ericeira · Douro · Porto'
   };
   const name = names[currentItin] || '';
-  el.innerHTML = `<strong>${name}</strong> · ${totalKm} km · ${Math.round(lodging)}€ de logement`;
+  el.innerHTML = `<strong>${name}</strong> · ${totalKm} km`;
 }
 
 /* ===== Checklists with localStorage ===== */
@@ -3104,6 +3407,31 @@ document.querySelectorAll('.seg-btn').forEach(btn => {
     // Move the indicator (CSS controlled by data-itin on parent)
     document.querySelector('.seg-track').dataset.itin = newItin;
     renderAll();
+  });
+});
+
+/* ===== Mode toggle (Confort / Budget) ===== */
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const newMode = btn.dataset.mode;
+    if (newMode === currentMode) return;
+    currentMode = newMode;
+    document.querySelectorAll('.mode-btn').forEach(b => {
+      b.classList.remove('active');
+      b.setAttribute('aria-selected', 'false');
+    });
+    btn.classList.add('active');
+    btn.setAttribute('aria-selected', 'true');
+    // Re-render what depends on mode (not the map, not distances)
+    renderDaysSwiper();
+    renderBudgetChart();
+    renderDynamicStats();
+    renderSegSummary();
+    // If sheet is open, re-render its content too
+    const sheet = document.getElementById('daySheet');
+    if (sheet && sheet.getAttribute('aria-hidden') === 'false') {
+      renderSheetContent(currentDayIdx);
+    }
   });
 });
 
